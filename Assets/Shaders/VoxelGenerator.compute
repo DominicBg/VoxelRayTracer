@@ -1,0 +1,27 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+RWTexture3D<uint> Result;
+
+float iTime;
+
+[numthreads(8,8,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+
+    if(id.y < 10 + 0 * sin(iTime * 2 + id.x * 0.122 + id.z * 0.72) + 0.0 *sin(iTime * 2 + id.x * 1.122 + id.z * 1.72))
+    {
+        Result[id] = 1;
+        return;
+    }
+
+    float sphereDist = 5;
+    float3 spherePos = float3(50, 25, 50) + float3(5 * sin(iTime * 1), 0, 5 * cos(iTime * 1));
+    if(distance(spherePos, id) < sphereDist)
+    {
+        Result[id] = 2;
+        return;
+    }
+
+     Result[id] = 0;
+}

@@ -1,0 +1,133 @@
+using UnityEngine;
+
+public class VoxelRayTracerAPI
+{
+    ComputeShader shader;
+    VoxelRayTracerSettings settings;
+    RenderTexture outputTexture;
+    RenderTexture voxel3DTexture;
+    Cubemap cubemap;
+
+    int kernelHandle;
+
+    Vector3 cameraPos;
+    Quaternion cameraRot;
+    float fov = 60;
+
+    public VoxelRayTracerAPI(ComputeShader computeShader)
+    {
+        shader = computeShader;
+        kernelHandle = shader.FindKernel("CSMain");
+
+        //cubemap = (Cubemap)RenderSettings.skybox.mainTexture;
+
+        SetMediumettings();
+    }
+
+
+    void EnsureComputeBuffer()
+    {
+        if (outputTexture == null || (outputTexture.width != settings.resolution.x && outputTexture.height != settings.resolution.y))
+        {
+            outputTexture = new RenderTexture(settings.resolution.x, settings.resolution.y, 0);
+            outputTexture.enableRandomWrite = true;
+            outputTexture.Create();
+        }
+
+
+        shader.SetVector("iResolution", new Vector4(settings.resolution.x, settings.resolution.y, 1, 1));
+        shader.SetInt("iMaxSteps", settings.maxRaySteps);
+        shader.SetInt("iReflectionCount", settings.reflectionCount);
+        shader.SetInt("iBlurIteration", settings.blurIteration);
+        shader.SetInt("iShadowIteration", settings.shadowIteration);
+        shader.SetInt("iVolumetricLightSteps", settings.volumetricLightSteps);
+
+        shader.SetTexture(kernelHandle, "Result", outputTexture);
+    }
+
+    public void SetCameraTransform(Vector3 cameraPos, Quaternion cameraRot)
+    {
+        this.cameraPos = cameraPos;
+        this.cameraRot = cameraRot;
+    }
+    public void SetCameraFOV(float fov)
+    {
+        this.fov = fov;
+    }
+
+    public void SetOpaqueVoxelGeometry(RenderTexture voxel3DTexture)
+    {
+        this.voxel3DTexture = voxel3DTexture;
+    }
+
+    public void SetCubeMap(Cubemap cubemap)
+    {
+        this.cubemap = cubemap;
+    }
+
+    public RenderTexture RenderToTexture(float t)
+    {
+        shader.SetFloat("iFOV", fov);
+
+        shader.SetFloat("iTime", t);
+
+        shader.SetVector("iCameraPos", cameraPos);
+        shader.SetVector("iCameraRot", new Vector4(cameraRot.x, cameraRot.y, cameraRot.z, cameraRot.w));
+        shader.SetFloat("iCameraFOV", fov);
+
+        shader.SetTexture(kernelHandle, "voxel", voxel3DTexture);
+        shader.SetTexture(kernelHandle, "cubemap", cubemap);
+
+        int x = settings.resolution.x / 8;
+        int y = settings.resolution.y / 8;
+        shader.Dispatch(kernelHandle, x, y, 1);
+
+        return outputTexture;
+    }
+
+    public void SetSettings(in VoxelRayTracerSettings settings)
+    {
+        this.settings = settings;
+        EnsureComputeBuffer();
+    }
+
+    public void SetHighSettings()
+    {
+        settings = new VoxelRayTracerSettings()
+        {
+            reflectionCount = 5,
+            blurIteration = 5,
+            shadowIteration = 5,
+            maxRaySteps = 120,
+            volumetricLightSteps = 450,
+            resolution = new Vector2Int(1050, 100)
+
+        };
+        EnsureComputeBuffer();
+    }
+    public void SetMediumettings()
+    {
+        settings = new VoxelRayTracerSettings()
+        {
+            reflectionCount = 2,
+            blurIteration = 1,
+            shadowIteration = 1,
+            maxRaySteps = 120,
+            volumetricLightSteps = 125,
+            resolution = new Vector2Int(250, 250)
+        };
+        EnsureComputeBuffer();
+    }
+}
+
+[System.Serializable]
+public struct VoxelRayTracerSettings
+{
+    public int reflectionCount;
+    public int blurIteration;
+    public int shadowIteration;
+    public int maxRaySteps;
+    public int volumetricLightSteps;
+
+    public Vector2Int resolution;
+}
