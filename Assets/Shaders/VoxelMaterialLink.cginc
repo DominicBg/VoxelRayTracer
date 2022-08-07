@@ -4,14 +4,18 @@
 #include "Materials/VoxelRayTracerMaterial2.cginc"
 #include "Materials/VoxelRayTracerMaterial3.cginc"
 
-float3 GetColor(uint materialID, RayHit hit)
+Material GetColor(uint materialID, in LightData lightData, in RayHit hit, in Settings settings, in Texture3D<uint> voxel)
 {
     switch(materialID)
     {
-        case 1: return GetColorMaterial1(hit);
-        case 2: return GetColorMaterial2(hit);
-        case 3: return GetColorMaterial3(hit);
+        case 1: return GetColorMaterial1(lightData, hit, settings, voxel);
+        case 2: return GetColorMaterial2(lightData, hit, settings, voxel);
+        case 3: return GetColorMaterial3(lightData, hit, settings, voxel);
     }
 
-    return 0;
+    Material material;
+    material.blur = 0;
+    material.color = 0;
+    material.reflection = 0;
+    return material;
 }

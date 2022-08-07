@@ -36,7 +36,7 @@ public class VoxelRayTracerTester : MonoBehaviour
 
         var texture = api.RenderToTexture(t);
 
-        //Render texture to a .mp4
+        //TODO Render texture to a .mp4
 
         material.SetTexture("_MainTex", texture);
     }

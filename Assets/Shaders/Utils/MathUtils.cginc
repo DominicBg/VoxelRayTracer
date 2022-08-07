@@ -1,3 +1,5 @@
+#ifndef _MathUtils
+#define _MathUtils
 
 // All components are in the range [0…1], including hue.
 float3 rgb2hsv(float3 c)
@@ -60,8 +62,6 @@ float easeInOutCubic(float x)
 {
     return x < 0.5 ? 4. * x * x * x : 1. - pow(-2. * x + 2., 3.) / 2.;
 }
-
-
 	
 float saturate(float x)
 {
@@ -85,16 +85,6 @@ float Remap(float fromMin, float fromMax, float toMin, float toMax, float x)
 {
     float t = saturate(unlerp(x, fromMin, fromMax));
     return lerp(toMin, toMax, t);
-}
-
-float3 tofloat3(float x)
-{
-    return float3(x, x, x);
-}
-
-float4 tofloat4(float x)
-{
-    return float4(x, x, x, x);
 }
 
 
@@ -132,3 +122,4 @@ float4 qInverse(float4 q)
 }
 
 
+#endif

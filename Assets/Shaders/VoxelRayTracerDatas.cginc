@@ -1,5 +1,5 @@
-#ifndef VoxelRayTracerDatas
-#define VoxelRayTracerDatas
+#ifndef _VoxelRayTracerDatas
+#define _VoxelRayTracerDatas
 
 struct RayHit
 {
@@ -27,6 +27,23 @@ struct LightData
 
     //https://en.wikipedia.org/wiki/Umbra,_penumbra_and_antumbra
     float penumbraRadius;
+};
+
+struct Material
+{
+    float3 color;
+    float reflection;
+    float blur;
+
+    //todo add ior (index of refraction)
+};
+
+struct Settings
+{
+    int maxSteps;
+    int volumetricLightSteps;
+    int blurIterations;
+    int shadowIterations;
 };
 
 #endif

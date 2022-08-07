@@ -8,7 +8,6 @@ float iTime;
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-
     if(id.y < 10 + 0 * sin(iTime * 2 + id.x * 0.122 + id.z * 0.72) + 0.0 *sin(iTime * 2 + id.x * 1.122 + id.z * 1.72))
     {
         Result[id] = 1;
@@ -22,6 +21,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         Result[id] = 2;
         return;
     }
+
+    if(id.z == 45 && id.y < 25 + 4 * sin(iTime * 2 + id.x * 0.1))
+    {
+        Result[id] = 3;
+        return;
+    }
+
 
      Result[id] = 0;
 }
