@@ -8,14 +8,14 @@ Unity implementation for a Voxel Raytracer
 - Volumetric Light
 - Penumbra Shadow
 - Skybox Support
-- Basic Material System
+- Basic Material System with different material
 - Single Light source
 - Glossiness
 
 
 # Missing Features
 - Multiple light sources
-- Support material with different reflection
+- Support material with different normal
 - Fix Volumetric light with the Skybox
 - Voxel Generation for Transparent Geometry
 - Support multiple blending for Transparent Geometry
