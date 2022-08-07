@@ -14,26 +14,43 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     public VoxelRayTracerSettings settings;
 
+    LightDataComponent[] lightDataComponents;
+    List<LightData> tempLightData = new List<LightData>();
+
     VoxelRayTracerAPI api;
     private void Start()
     {
         api = new VoxelRayTracerAPI(computeShader);
         api.SetSettings(settings);
+
+        lightDataComponents = FindObjectsOfType<LightDataComponent>();
     }
 
     private void Update()
     {
         if (isAuto) t += Time.deltaTime;
 
+        //Set Camera pos
         api.SetCameraTransform(mainCamera.transform.position, mainCamera.transform.rotation);
         api.SetCameraFOV(mainCamera.fieldOfView);
 
+        //Create geometry
         var voxel = voxelGenerator.Generate(new Vector3Int(100, 100, 100), t);
         api.SetOpaqueVoxelGeometry(voxel);
         
+        //Add cubemap
         if(cubemap != null)
             api.SetCubeMap(cubemap);
 
+        //Add lights
+        tempLightData.Clear();
+        for (int i = 0; i < lightDataComponents.Length; i++)
+        {
+            tempLightData.Add(lightDataComponents[i].GetLightData());
+        }
+        api.SetLights(tempLightData);
+
+        //Render image!
         var texture = api.RenderToTexture(t);
 
         //TODO Render texture to a .mp4

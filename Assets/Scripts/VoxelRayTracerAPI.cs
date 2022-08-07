@@ -1,12 +1,15 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class VoxelRayTracerAPI
 {
-    ComputeShader shader;
     VoxelRayTracerSettings settings;
+    ComputeShader shader;
+    ListBuffer<LightData> lightBuffer;
     RenderTexture outputTexture;
     RenderTexture voxel3DTexture;
     Cubemap cubemap;
+
 
     int kernelHandle;
 
@@ -14,11 +17,12 @@ public class VoxelRayTracerAPI
     Quaternion cameraRot;
     float fov = 60;
 
-    public VoxelRayTracerAPI(ComputeShader computeShader)
+    public unsafe VoxelRayTracerAPI(ComputeShader computeShader)
     {
         shader = computeShader;
         kernelHandle = shader.FindKernel("CSMain");
 
+        lightBuffer = new ListBuffer<LightData>("lightDatas", sizeof(LightData));
         //cubemap = (Cubemap)RenderSettings.skybox.mainTexture;
 
         SetMediumettings();
@@ -65,6 +69,12 @@ public class VoxelRayTracerAPI
         this.cubemap = cubemap;
     }
 
+    public void SetLights(List<LightData> lights)
+    {
+        lightBuffer.Clear();
+        lightBuffer.AddRange(lights);
+    }
+
     public RenderTexture RenderToTexture(float t)
     {
         shader.SetFloat("iFOV", fov);
@@ -77,6 +87,8 @@ public class VoxelRayTracerAPI
 
         shader.SetTexture(kernelHandle, "voxel", voxel3DTexture);
         shader.SetTexture(kernelHandle, "cubemap", cubemap);
+
+        lightBuffer.UpdateData(kernelHandle, shader);
 
         int x = settings.resolution.x / 8;
         int y = settings.resolution.y / 8;
@@ -118,6 +130,11 @@ public class VoxelRayTracerAPI
         };
         EnsureComputeBuffer();
     }
+
+    void OnDestroy()
+    {
+        lightBuffer.Dispose();
+    }
 }
 
 [System.Serializable]
@@ -131,3 +148,21 @@ public struct VoxelRayTracerSettings
 
     public Vector2Int resolution;
 }
+
+
+public enum VoxelLightType : int { Directional, Point, Ambient }
+
+[System.Serializable]
+public struct LightData //Must reflect LightData in VoxelRayTracerDatas
+{
+    public VoxelLightType lightType;
+    public Vector3 position;
+    public Vector3 color;
+    public Vector3 direction;
+    public float intensity;
+    public float volumetricIntensity;
+    public float radius;
+
+    //https://en.wikipedia.org/wiki/Umbra,_penumbra_and_antumbra
+    public float penumbraRadius;
+};

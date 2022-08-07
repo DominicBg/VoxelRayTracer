@@ -2,14 +2,14 @@
 
 
 
-Material GetColorMaterial2(in LightData lightData, in RayHit hit, in Settings settings, in Texture3D<uint> voxel)
+Material GetColorMaterial2(in SceneData sceneData, in RayHit hit)
 {
     Material material;
     material.reflection = 0.5;
     material.blur = 0;
 
     float3 col = float3(1,1,1);
-    material.color = col * BasicLight(lightData, hit, settings, voxel);
+    material.color = col * BasicLight(sceneData, hit);
 
     return material;
 }

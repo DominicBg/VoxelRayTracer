@@ -4,76 +4,77 @@
 #include "MathUtils.cginc"
 #include "../VoxelRayCaster.cginc"
 
+#define LIGHT_TYPE_DIRECTIONAL 0
+#define LIGHT_TYPE_POINT 1
+#define LIGHT_TYPE_AMBIENT 2
 
-
-float3 DiffuseLight(float3 lightPos, float3 lightColor, float3 position, float3 normal)
+float DiffuseLight(float3 lightDir, float3 normal)
 {
-    float3 ldir = normalize(lightPos - position);
-    float diffuse = dot(normal, ldir);
-    return lightColor * max(0.0, diffuse);
+    float diffuse = dot(normal, lightDir);
+    return max(0.0, diffuse);
 }
 
 float3 DiffuseLight(in LightData lightData, in RayHit hit)
 {
-    return DiffuseLight(lightData.position, lightData.color, hit.pos, hit.normal);
+    float3 lightDir = normalize(lightData.position - hit.pos);
+    return lightData.intensity * lightData.color * DiffuseLight(lightDir, hit.normal);
 }
 
-
-float3 SpecularLight(float3 lightPos, float3 lightColor, float3 position, float specularStrength, float power, float3 viewDir, float3 normal)
+float SpecularLight(float3 lightPos, float3 position, float specularStrength, float power, float3 viewDir, float3 normal)
 {
-    //Specular
-    //float specularStrength = 0.35;
     float3 ldir = normalize(lightPos - position);
     float3 reflectDir = reflect(ldir, normal);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), power);
-    //float spec = pow(max(dot(viewDir, reflectDir), 0.0), 8.0);
     return specularStrength * spec;  
 }
 
 float3 SpecularLight(in LightData lightData, in RayHit hit)
 {
-    return SpecularLight(lightData.position, lightData.color,  0.25, 4, hit.pos, hit.rd, hit.normal);
+    return lightData.intensity * lightData.color * SpecularLight(lightData.position,  0.25, 4, hit.pos, hit.rd, hit.normal);
 }
 
 float3 SpecularLight(in LightData lightData, in RayHit hit, float specularStrength, float power)
 {
-    return SpecularLight(lightData.position, lightData.color,  specularStrength, power, hit.pos, hit.rd, hit.normal);
+    return SpecularLight(lightData.position,  specularStrength, power, hit.pos, hit.rd, hit.normal);
 }
 
 
-float HardShadow(float3 lightPos, float3 position, float3 normal, in Texture3D<uint> voxel)
+float HardShadow(float3 lightPos, float lightRadius, float3 position, float3 normal, in SceneData sceneData)
 {
-    float lightDist = distance(position, lightPos);
-    //float3 ldir = normalize(lightPos - position);
-    float3 ldir = (lightPos - position) / lightDist;
+    float3 diff = (lightPos - position);
+    float lightDistsq = dot(diff, diff);
 
-    float shadow = 1.0;
-    float umbraStrength = 0.9;
+    if(lightDistsq > lightRadius * lightRadius) 
+        return 1;
+
+    float lightDist = sqrt(lightDistsq);
+    float3 ldir = diff / lightDist;
     
-    RayHit shadowRay = RayCastWithVoxel(position + normal * 0.001, ldir, 240, voxel);
-    if(shadowRay.dist < lightDist)
-    {
-        shadow = 1. - umbraStrength;
-    }
-    return shadow;
+    RayHit shadowRay = RayCast(position + normal * 0.001, ldir, sceneData);
+    if(shadowRay.hasHit && shadowRay.dist < lightDist)
+        return 0;
+
+    return 1;
 }
 
-float HardShadow(in LightData lightData, in RayHit hit, in Texture3D<uint> voxel)
+float HardShadow(in LightData lightData, in RayHit hit, in SceneData sceneData)
 {
-    return HardShadow(lightData.position, hit.pos, hit.normal, voxel);
+    return HardShadow(lightData.position, lightData.radius, hit.pos, hit.normal, sceneData);
 }
 
-
-float SoftShadow(float3 lightPos, float penumbraRadius, float3 position, float3 normal, int shadowIterations, in Texture3D<uint> voxel)
+float SoftShadow(float3 lightPos, float lightRadius, float penumbraRadius, float3 position, float3 normal, in SceneData sceneData)
 {
-    float lightDist = distance(position, lightPos);
-    //float3 ldir = normalize(lightData.position - position);
-    float3 ldir = (lightPos - position) / lightDist;
+    int shadowIterations = sceneData.settings.shadowIterations;
 
-    float shadow = 1.0;
+    float3 diff = (lightPos - position);
+    float lightDistsq = dot(diff, diff);
+    if(lightDistsq > lightRadius *  lightRadius) 
+        return 0;
 
-    float lightSoftShadow = 0.15;
-    float umbraStrength = 0.9;
+    float lightDist = sqrt(lightDistsq);
+    float3 ldir = diff / lightDist;
+
+    float shadowIntensity = 0.5;
 
     int shadowHits = 0;
     for(int i = 0; i < shadowIterations; i++)
@@ -81,86 +82,121 @@ float SoftShadow(float3 lightPos, float penumbraRadius, float3 position, float3 
         float3 tempLightPos = lightPos + penumbraRadius * ShittyRandom(float(i));
         float3 templdir = normalize(tempLightPos - position);
         
-        RayHit shadowRay = RayCastWithVoxel(position + normal * 0.001, templdir, 240, voxel);
-        if(shadowRay.dist < lightDist)
+        RayHit shadowRay = RayCast(position + normal * 0.001, templdir, sceneData);
+        if(shadowRay.hasHit && shadowRay.dist < lightDist - penumbraRadius)
         {
             shadowHits++;
         }
     }
     float shadowRatio = (float(shadowHits) / float(shadowIterations));
-    shadow = 1. - umbraStrength * (shadowRatio * shadowRatio * shadowRatio); 
-    return shadow;
+    return 1 - shadowIntensity * (shadowRatio * shadowRatio * shadowRatio); 
 }
 
-float SoftShadow(in LightData lightData, in RayHit hit, in Settings settings, in Texture3D<uint> voxel)
+float SoftShadow(in LightData lightData, in RayHit hit, in SceneData sceneData)
 {
-    return SoftShadow(lightData.position, lightData.penumbraRadius, hit.pos, hit.normal, settings.shadowIterations, voxel);
+    return SoftShadow(lightData.position, lightData.radius, lightData.penumbraRadius, hit.pos, hit.normal, sceneData);
 }
 
-float3 BasicLight(in LightData lightData, in RayHit hit, in Settings settings, in Texture3D<uint> voxel)
+float FadeOffIntensity(in LightData lightData, float3 position)
 {
-    //return saturate(DiffuseLight(lightData, hit) + SpecularLight(lightData, hit)) * SoftShadow(lightData, hit, settings, voxel);
-    return saturate(DiffuseLight(lightData, hit) + SpecularLight(lightData, hit));
-    //return SoftShadow(lightData, hit, settings, voxel);
-}
+    float3 diff = distance(position, lightData.position);
+    float lightDistsq = dot(diff, diff);
 
-/*
-float Light(RayHit hit)
-{
-    lightPos = 0. * float3(sin(iTime), 0.0, cos(iTime));
-    lightPos = float3(50, 25, 50);
-
-    float3 ldir = normalize(lightPos - hit.pos);
-    float diffuse = dot(hit.normal, ldir);
-    diffuse =  max(0.0, diffuse);
-    
-    float lightDist = distance(hit.pos, lightPos);
-    float ambient = 0.5;
-    
-
-    //Specular
-    float specularStrength = 0.35;
-    float3 reflectDir = reflect(ldir, hit.normal);  
-    float spec = pow(max(dot(hit.rd, reflectDir), 0.0), 8.0);
-    float specular = specularStrength * spec;  
-    
-
-    //shadow
-    float umbraStrength = 0.5;
-    
-    float shadow = 1.0;
-#ifdef HD    
-    float lightSoftShadow = 0.15;
-
-    int shadowHits = 0;
-    for(int i = 0; i < iShadowIteration; i++)
+    if(lightDistsq > lightData.radius * lightData.radius)
     {
-        float3 tempLightPos = lightPos + lightSoftShadow * ShittyRandom(float(i));
-        float3 templdir = normalize(tempLightPos - hit.pos);
+        return 0;
+    }
+
+    float lightDist = sqrt(lightDistsq);
+
+    //linear fadeoff, todo find something better
+    return 1 - (lightDist / lightData.radius);
+}
+
+float FadeOffIntensity(in LightData lightData, in RayHit hit)
+{
+    return FadeOffIntensity(lightData, hit.pos);
+}
+
+float3 BasicLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
+{
+    switch(lightData.type)
+    {
+        case LIGHT_TYPE_DIRECTIONAL : 
+            return lightData.intensity * lightData.color * DiffuseLight(lightData.dir, hit.normal);
         
-        RayHit shadowRay = RayCast(hit.pos + hit.normal * 0.001, templdir);
-        if(shadowRay.dist < lightDist)
+        case LIGHT_TYPE_POINT : 
+            float diffuse = DiffuseLight(lightData, hit);
+            float spec = SpecularLight(lightData, hit);
+            float shadow = (sceneData.settings.shadowIterations > 1) ? SoftShadow(lightData, hit, sceneData) : HardShadow(lightData, hit, sceneData);
+            float fadeOff = FadeOffIntensity(lightData, hit);
+            return (diffuse + spec) * shadow * fadeOff;
+
+        case LIGHT_TYPE_AMBIENT :
+            return lightData.intensity * lightData.color;
+    }
+
+    return 1;
+}
+
+float3 BasicLight(in SceneData sceneData, in RayHit hit)
+{
+    float3 colSum = 0;
+    for(int i = 0; i < sceneData.lightDatas.Length; i++)
+    {
+        colSum += BasicLight(sceneData.lightDatas[i], hit, sceneData);
+    }
+    return saturate(colSum);
+}
+
+
+
+float4 CalculateVolumetricLight(float3 ro, float3 rd, LightData lightData, float maxDist, in SceneData sceneData)
+{
+    int steps = sceneData.settings.volumetricLightSteps;
+    float dx = lightData.radius / float(steps);
+    
+    float vIntensity = lightData.volumetricIntensity;
+    float lightSum = 0.;
+    
+    for(int i = 0; i < steps; i++)
+    {
+        float currentDist = float(i) * dx;
+        if(currentDist > maxDist) break;
+        
+        float3 p = ro + rd * currentDist;
+        float3 d = lightData.position - p;
+        float l = length(d);
+
+        if(l > lightData.radius)
         {
-            shadowHits++;
+            continue;
+        }
+        
+        RayHit hit = RayCast(p, d/l, sceneData);
+        if(!hit.hasHit || l < hit.dist)
+        {
+            //float vNoise = VolumetricNoise(p);
+            //vNoise = Remap(0., 1., 0.5, 1., vNoise); 
+            
+            float fadeOff = FadeOffIntensity(lightData, p);
+            lightSum += lightData.color * lightData.intensity * vIntensity * dx * fadeOff;
+            //todo try this shit *= exp(-cloud * dStep);
         }
     }
-    float shadowRatio = (float(shadowHits) / float(iShadowIteration));
-    shadow = 1. - umbraStrength * shadowRatio * shadowRatio * shadowRatio; 
-    
-#else
-    RayHit shadowRay = RayCast(hit.pos + hit.normal * 0.001, ldir);
-    if(shadowRay.dist < lightDist)
-    {
-        shadow = 1. - umbraStrength;
-    }
-#endif
-    float lightDistStrg = lightDist/50.;
-    lightDistStrg = clamp(lightDistStrg * lightDistStrg * lightDistStrg, 0.0, 1.0) * 0.5;
-    
-    
-    float finalLightIntensity = (diffuse + specular) * shadow + ambient - lightDistStrg;
-    return saturate(finalLightIntensity);
+    return lightSum;
 }
-*/
 
+float4 CalculateVolumetricLight(float3 ro, float3 rd, float maxDist, in SceneData sceneData)
+{
+    float4 volumetricLightSum = 0;
+    for(int i = 0; i < sceneData.lightDatas.Length; i++)
+    {
+        if(sceneData.lightDatas[i].type == LIGHT_TYPE_POINT && sceneData.lightDatas[i].volumetricIntensity > 0 && sceneData.lightDatas[i].intensity > 0)
+        {
+            volumetricLightSum += CalculateVolumetricLight(ro, rd, sceneData.lightDatas[i], maxDist, sceneData);
+        }
+    }
+    return saturate(volumetricLightSum);
+}
 #endif

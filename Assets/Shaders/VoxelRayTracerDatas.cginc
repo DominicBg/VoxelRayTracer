@@ -20,9 +20,12 @@ struct RayHit
 
 struct LightData
 {
+    int type;
     float3 position;
     float3 color;
+    float3 dir;
     float intensity;
+    float volumetricIntensity;
     float radius;
 
     //https://en.wikipedia.org/wiki/Umbra,_penumbra_and_antumbra
@@ -44,6 +47,13 @@ struct Settings
     int volumetricLightSteps;
     int blurIterations;
     int shadowIterations;
+};
+
+struct SceneData
+{
+    Texture3D<uint> voxel;
+    StructuredBuffer<LightData> lightDatas;
+    Settings settings;
 };
 
 #endif

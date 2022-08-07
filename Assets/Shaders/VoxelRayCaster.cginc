@@ -81,8 +81,11 @@ bool3 lessThanEqual(float3 a, float3 b)
     return bool3(a <= b);
 }
 
-RayHit RayCastWithVoxel(float3 ro, float3 rd, int maxStep, Texture3D<uint> voxel)
+RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
 {
+    int maxStep = sceneData.settings.maxSteps;
+    Texture3D<uint> voxel = sceneData.voxel;
+
 	int3 mapPos = int3(floor(ro + 0.));
 
     //todo comprendre wtf que ça fait ça

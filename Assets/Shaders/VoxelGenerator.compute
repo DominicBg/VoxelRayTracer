@@ -15,14 +15,14 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
     float sphereDist = 5;
-    float3 spherePos = float3(50, 25, 50) + float3(5 * sin(iTime * 1), 0, 5 * cos(iTime * 1));
+    float3 spherePos = float3(50, 35, 50) + float3(5 * sin(iTime * 1), 0, 5 * cos(iTime * 1));
     if(distance(spherePos, id) < sphereDist)
     {
         Result[id] = 2;
         return;
     }
 
-    if(id.z == 45 && id.y < 25 + 4 * sin(iTime * 2 + id.x * 0.1))
+    if(id.z == 50 && id.y < 25 + 4 * sin(iTime * 2 + id.x * 0.1))
     {
         Result[id] = 3;
         return;

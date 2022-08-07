@@ -2,7 +2,7 @@
 #include "Utils/LightUtils.cginc"
 
 
-Material GetColorMaterial1(in LightData lightData, in RayHit hit, in Settings settings, in Texture3D<uint> voxel)
+Material GetColorMaterial1(in SceneData sceneData, in RayHit hit)
 {
     Material material;
     material.reflection = 0.2;
@@ -10,7 +10,7 @@ Material GetColorMaterial1(in LightData lightData, in RayHit hit, in Settings se
 
     float3 col = float3(1,1,1);
 
-    material.color = col * BasicLight(lightData, hit, settings, voxel);
+    material.color = col * BasicLight(sceneData, hit);
 
     return material;
 }
