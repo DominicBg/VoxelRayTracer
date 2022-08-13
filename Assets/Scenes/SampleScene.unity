@@ -518,6 +518,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   voxelGeneratorShader: {fileID: 7200000, guid: 17e47d6b9adfa924989f53046aa52ae1, type: 3}
+  voxelGeneratorShaderTransparent: {fileID: 7200000, guid: acde0456731096f4999e9a9b44061d31, type: 3}
   resolution: {x: 100, y: 100, z: 100}
 --- !u!1 &1092161889
 GameObject:

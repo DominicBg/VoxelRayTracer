@@ -9,9 +9,13 @@ public class VoxelRayTracerAPI
     ComputeShader shader;
     ListBuffer<LightData> lightBuffer;
     RenderTexture outputTexture;
+
     RenderTexture voxelTexture3D;
+    RenderTexture voxelTextureTransparent3D;
+
     Cubemap cubemap;
     Vector3Int voxel3DSizes;
+    Vector3Int voxelTransparent3DSizes;
 
     int kernelHandle;
 
@@ -49,7 +53,6 @@ public class VoxelRayTracerAPI
             outputTexture.Create();
         }
 
-
         shader.SetVector("iResolution", new Vector4(settings.resolution.x, settings.resolution.y, 1, 1));
         shader.SetInt("iMaxSteps", settings.maxRaySteps);
         shader.SetInt("iReflectionCount", settings.reflectionCount);
@@ -85,6 +88,12 @@ public class VoxelRayTracerAPI
         voxel3DSizes = new Vector3Int(voxelTexture3D.width, voxelTexture3D.height, voxelTexture3D.volumeDepth);
     }
 
+    public void SetTransparentVoxelGeometry(RenderTexture voxelTextureTransparent3D)
+    {
+        this.voxelTextureTransparent3D = voxelTextureTransparent3D;
+        voxelTransparent3DSizes = new Vector3Int(voxelTextureTransparent3D.width, voxelTextureTransparent3D.height, voxelTextureTransparent3D.volumeDepth);
+    }
+
     public void SetCubeMap(Cubemap cubemap)
     {
         this.cubemap = cubemap;
@@ -118,9 +127,16 @@ public class VoxelRayTracerAPI
             shader.SetMatrix("iCameraInverseProjection", mainCamera.projectionMatrix.inverse);
         }
 
+        shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
         shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
 
-        shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
+        if(voxelTextureTransparent3D != null)
+        {
+            shader.SetTexture(kernelHandle, "voxelTransparent", voxelTextureTransparent3D);
+            shader.SetVector("iVoxelTransparentSizes", new Vector4(voxelTransparent3DSizes.x, voxelTransparent3DSizes.y, voxelTransparent3DSizes.z, 0));
+        }
+
+
         shader.SetTexture(kernelHandle, "cubemap", cubemap);
 
         //Debugs

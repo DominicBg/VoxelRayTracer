@@ -16,6 +16,8 @@
 
 SamplerState PointClampSampler;
 Texture3D<uint> voxel;
+Texture3D<uint> voxelTransparent;
+
 TextureCube<float4> cubemap;
 RWTexture2D<float4> Result;
 StructuredBuffer<LightData> lightDatas;
@@ -42,7 +44,9 @@ int iShadowIteration = 1;
 float2 iResolution;
 float iTime = 0;
 int iReflectionCount = 2;
+
 float3 iVoxelSizes;
+float3 iVoxelTransparentSizes;
 
 //Debug
 bool iNormalDebugView;
@@ -53,15 +57,6 @@ bool iLightOnlyDebugView;
 //Local
 SceneData sceneData;
 Settings settings;
-
-//TODO remove and put a Texture3D<uint> transparentVoxel;
-float getVoxelTransparent(int3 c)
- {
-	int3 p = float3(c) + 0.5;
-   
-	float d = sdSphere(p, 1. + 0.5 * sin(iTime));
-	return d;
-}
 
 Material GetColor(inout RayHit hit)
 {
@@ -87,7 +82,7 @@ float4 RayCastTransparent(float3 rayPos, float3 rayDir, float maxDist)
     
     bool3 mask;
 	
-    float transparency = 0.025;
+    float transparency = 0.125;
     float4 sumColor = 0.0;
     
     [loop]
@@ -96,9 +91,9 @@ float4 RayCastTransparent(float3 rayPos, float3 rayDir, float maxDist)
         //optimize this
         if(distancesq(float3(mapPos), rayPos) > maxDist * maxDist) break;
         
-		if (getVoxelTransparent(mapPos) < 0.)
+		if (voxelTransparent[mapPos] != 0)
         {
-            RayHit hit = CalculateRayHit(rayPos, rayDir, mapPos, mask, voxel);
+            RayHit hit = CalculateRayHit(rayPos, rayDir, mapPos, mask, voxelTransparent);
             float3 col = GetColor(hit).color;
             float boxDepth = abs(hit.dist - hit.dist2);
             sumColor += float4(col, 1.0) * boxDepth * transparency;          

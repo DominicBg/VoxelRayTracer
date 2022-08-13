@@ -159,6 +159,7 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, LightData lightData, float
     float vIntensity = lightData.volumetricIntensity;
     float4 lightSum = 0.;
     
+    [loop]
     for(int i = 0; i < steps; i++)
     {
         float currentDist = float(i) * dx;

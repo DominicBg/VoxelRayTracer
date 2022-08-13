@@ -43,6 +43,12 @@ public class VoxelRayTracerTester : MonoBehaviour
         //Create geometry
         var voxel = voxelGenerator.Generate(t);
         api.SetOpaqueVoxelGeometry(voxel);
+
+        if(voxelGenerator.voxelGeneratorShaderTransparent != null)
+        {
+            var voxelTr = voxelGenerator.GenerateTransparent(t);
+            api.SetTransparentVoxelGeometry(voxelTr);
+        }
         
         //Add cubemap
         if(cubemap != null)
