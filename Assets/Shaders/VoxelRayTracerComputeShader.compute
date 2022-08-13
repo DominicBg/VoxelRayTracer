@@ -8,6 +8,7 @@
 #include "VoxelRayTracerDatas.cginc"
 #include "VoxelMaterialLink.cginc"
 #include "VoxelRayCaster.cginc"
+#include "GPUCamera.cginc"
 
 
 //#include "Utils/LightUtils.cginc"
@@ -22,10 +23,17 @@ StructuredBuffer<LightData> lightDatas;
 #define MAXREFLECTIONCOUNT 10
 
 //Inputs
+
+
+//Cams
+bool iUseFreeCamera;
+
 float3 iCameraPos;
 float4 iCameraRot;
 float iCameraFOV;
-float iCameraOrthoSize; //todo implement ortho
+
+float4x4 iCameraToWorld;
+float4x4 iCameraInverseProjection;
 
 int iMaxSteps = 120;
 int iVolumetricLightSteps = 120;
@@ -34,7 +42,7 @@ int iShadowIteration = 1;
 float2 iResolution;
 float iTime = 0;
 int iReflectionCount = 2;
-int3 iVoxelSizes;
+float3 iVoxelSizes;
 
 //Debug
 bool iNormalDebugView;
@@ -71,8 +79,6 @@ Material GetColor(inout RayHit hit)
 
 float4 RayCastTransparent(float3 rayPos, float3 rayDir, float maxDist)
 {
-    rayPos -= iVoxelSizes/2;
-
 	int3 mapPos = int3(floor(rayPos + 0.));
     float rayLength = length(rayDir);
 	float3 deltaDist = abs(float3(rayLength, rayLength, rayLength) / rayDir);
@@ -165,7 +171,17 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float2 uv = (float2(id.xy) / iResolution.xy) * 2.0 - 1.0;
     float3 ro, rd;
 
-    PerspectiveCam(iCameraPos, iCameraRot, uv, iCameraFOV, ro, rd);
+    if(iUseFreeCamera)
+    {   
+        PerspectiveCam(iCameraPos, iCameraRot, uv, iCameraFOV, ro, rd);
+    }
+    else
+    {
+        CreateCameraRay(uv, iCameraToWorld, iCameraInverseProjection, ro, rd);
+    }
+
+    //Center voxels at 0,0,0
+    ro += float3(iVoxelSizes.x, 0.0, iVoxelSizes.z) * 0.5;
 
 	RayHit hit;
     if(iNormalDebugView)

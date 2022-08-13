@@ -84,9 +84,6 @@ bool3 lessThanEqual(float3 a, float3 b)
 RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
 {
     //Center offset
-    //ro -= sceneData.voxelSizes/2;
-
-
     int maxStep = sceneData.settings.maxSteps;
     Texture3D<uint> voxel = sceneData.voxel;
 

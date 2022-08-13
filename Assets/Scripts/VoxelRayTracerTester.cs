@@ -14,6 +14,7 @@ public class VoxelRayTracerTester : MonoBehaviour
     public bool isAuto;
     public RenderDebugMode renderDebugMode;
 
+
     public VoxelRayTracerSettings settings;
 
     LightDataComponent[] lightDataComponents;
@@ -35,11 +36,12 @@ public class VoxelRayTracerTester : MonoBehaviour
         api.SetRenderDebugMode(renderDebugMode);
 
         //Set Camera pos
-        api.SetCameraTransform(mainCamera.transform.position, mainCamera.transform.rotation);
-        api.SetCameraFOV(mainCamera.fieldOfView);
+        api.SetCamera(mainCamera);
+        // api.SetCameraTransform(mainCamera.transform.position, mainCamera.transform.rotation);
+        //api.SetCameraFOV(mainCamera.fieldOfView);
 
         //Create geometry
-        var voxel = voxelGenerator.Generate(new Vector3Int(100, 100, 100), t);
+        var voxel = voxelGenerator.Generate(t);
         api.SetOpaqueVoxelGeometry(voxel);
         
         //Add cubemap
@@ -62,6 +64,35 @@ public class VoxelRayTracerTester : MonoBehaviour
         material.SetTexture("_MainTex", texture);
     }
 
+    //public void RenderInCamera(Camera camera, float t)
+    //{
+    //    api = new VoxelRayTracerAPI(computeShader);
+    //    api.SetSettings(settings);
+
+    //    lightDataComponents = FindObjectsOfType<LightDataComponent>();
+
+    //    api.SetCameraTransform(camera.transform.position, camera.transform.rotation);
+    //    api.SetCameraFOV(camera.fieldOfView);
+    //    //Create geometry
+    //    var voxel = voxelGenerator.Generate(t);
+    //    api.SetOpaqueVoxelGeometry(voxel);
+
+    //    //Add cubemap
+    //    if (cubemap != null)
+    //        api.SetCubeMap(cubemap);
+
+    //    //Add lights
+    //    tempLightData.Clear();
+    //    for (int i = 0; i < lightDataComponents.Length; i++)
+    //    {
+    //        tempLightData.Add(lightDataComponents[i].GetLightData());
+    //    }
+    //    api.SetLights(tempLightData);
+
+    //    //Render image!
+    //    camera.targetTexture = api.RenderToTexture(t);
+    //    api.Dispose();
+    //}
 
     void OnDestroy()
     {

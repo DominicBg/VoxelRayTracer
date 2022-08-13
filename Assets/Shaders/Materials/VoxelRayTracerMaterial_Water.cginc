@@ -7,7 +7,7 @@ float GetDist(float3 p, float t)
 {
     float2 center = 50;
     float d = distance(p.xz, center);
-    float height = (sin(-t * 5 + d * 0.75));
+    float height = (sin(-t * 5 + d * 0.75) * 0.5 + 0.5);
     return height;
 }
 

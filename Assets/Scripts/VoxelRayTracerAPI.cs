@@ -3,21 +3,29 @@ using UnityEngine;
 
 public class VoxelRayTracerAPI
 {
-    public enum RenderDebugMode { None, Normal, ReflectedDirection, UV, LightOnly}
+    public enum RenderDebugMode { None, Normal, ReflectedDirection, UV, LightOnly }
 
     VoxelRayTracerSettings settings;
     ComputeShader shader;
     ListBuffer<LightData> lightBuffer;
     RenderTexture outputTexture;
-    RenderTexture voxel3DTexture;
+    RenderTexture voxelTexture3D;
     Cubemap cubemap;
-    Vector3 voxel3DSizes;
+    Vector3Int voxel3DSizes;
 
     int kernelHandle;
 
+
+    bool useFreeCamera;
+
+    //Free camera Mode
     Vector3 cameraPos;
     Quaternion cameraRot;
     float fov = 60;
+
+    //Unity camera Mode
+    Camera mainCamera;
+
     RenderDebugMode debugMode;
 
     public unsafe VoxelRayTracerAPI(ComputeShader computeShader)
@@ -34,7 +42,7 @@ public class VoxelRayTracerAPI
 
     void EnsureComputeBuffer()
     {
-        if (outputTexture == null || (outputTexture.width != settings.resolution.x && outputTexture.height != settings.resolution.y))
+        if (outputTexture == null || (outputTexture.width != settings.resolution.x && outputTexture.height != settings.resolution.y))
         {
             outputTexture = new RenderTexture(settings.resolution.x, settings.resolution.y, 0);
             outputTexture.enableRandomWrite = true;
@@ -52,20 +60,29 @@ public class VoxelRayTracerAPI
         shader.SetTexture(kernelHandle, "Result", outputTexture);
     }
 
+
+    public void SetCamera(Camera camera)
+    {
+        this.mainCamera = camera;
+        this.useFreeCamera = false;
+    }
+
     public void SetCameraTransform(Vector3 cameraPos, Quaternion cameraRot)
     {
         this.cameraPos = cameraPos;
         this.cameraRot = cameraRot;
+        this.useFreeCamera = true;
+
     }
     public void SetCameraFOV(float fov)
     {
         this.fov = fov;
     }
 
-    public void SetOpaqueVoxelGeometry(RenderTexture voxel3DTexture)
+    public void SetOpaqueVoxelGeometry(RenderTexture voxelTexture3D)
     {
-        this.voxel3DTexture = voxel3DTexture;
-        voxel3DSizes = new Vector3(voxel3DTexture.width, voxel3DTexture.height, voxel3DTexture.volumeDepth);
+        this.voxelTexture3D = voxelTexture3D;
+        voxel3DSizes = new Vector3Int(voxelTexture3D.width, voxelTexture3D.height, voxelTexture3D.volumeDepth);
     }
 
     public void SetCubeMap(Cubemap cubemap)
@@ -81,16 +98,29 @@ public class VoxelRayTracerAPI
 
     public RenderTexture RenderToTexture(float t)
     {
-        shader.SetFloat("iFOV", fov);
-
         shader.SetFloat("iTime", t);
 
-        shader.SetVector("iCameraPos", cameraPos);
-        shader.SetVector("iCameraRot", new Vector4(cameraRot.x, cameraRot.y, cameraRot.z, cameraRot.w));
-        shader.SetFloat("iCameraFOV", fov);
-        shader.SetVector("iVoxelSizes", voxel3DSizes);
 
-        shader.SetTexture(kernelHandle, "voxel", voxel3DTexture);
+        //If I want to port this outside of unity lol
+        shader.SetBool("iUseFreeCamera", useFreeCamera);
+
+        //Free Cam
+        if (useFreeCamera)
+        {
+            shader.SetVector("iCameraPos", cameraPos);
+            shader.SetVector("iCameraRot", new Vector4(cameraRot.x, cameraRot.y, cameraRot.z, cameraRot.w));
+            shader.SetFloat("iCameraFOV", fov);
+        }
+        else
+        {
+            //Unity Cam
+            shader.SetMatrix("iCameraToWorld", mainCamera.cameraToWorldMatrix);
+            shader.SetMatrix("iCameraInverseProjection", mainCamera.projectionMatrix.inverse);
+        }
+
+        shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
+
+        shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
         shader.SetTexture(kernelHandle, "cubemap", cubemap);
 
         //Debugs
