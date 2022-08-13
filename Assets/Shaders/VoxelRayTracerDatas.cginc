@@ -54,6 +54,8 @@ struct SceneData
     Texture3D<uint> voxel;
     StructuredBuffer<LightData> lightDatas;
     Settings settings;
+    float time;
+    int3 voxelSizes;
 };
 
 #endif

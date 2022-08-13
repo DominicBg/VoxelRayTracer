@@ -54,23 +54,23 @@ float2 GetUV(RayHit hit)
     }
 }
 
-RayHit CalculateRayHit(float3 rayPos, float3 rayDir, int3 mapPos, bool3 mask, Texture3D<uint> voxel)
+RayHit CalculateRayHit(float3 ro, float3 rd, int3 mapPos, bool3 mask, Texture3D<uint> voxel)
 {
-    BoxIntersectionResult intersection = BoxIntersection(float3(mapPos), float3(mapPos + 1), rayPos, rayDir);
+    BoxIntersectionResult intersection = BoxIntersection(float3(mapPos), float3(mapPos + 1), ro, rd);
     float3 normal = float3(mask);
-    normal *= sign(-rayDir);
+    normal *= sign(-rd);
     
     RayHit hit;
-    hit.ro = rayPos;
-    hit.rd = rayDir;
+    hit.ro = ro;
+    hit.rd = rd;
     hit.hasHit = intersection.hasHit;
     hit.dist = intersection.dist1;
     hit.dist2 = intersection.dist2;
-    hit.pos = rayPos + rayDir * intersection.dist1;
+    hit.pos = ro + rd * intersection.dist1;
     hit.normal = normal;
-    hit.reflDir = reflect(rayDir, normal);
+    hit.reflDir = reflect(rd, normal);
     hit.cell = mapPos;
-    hit.uv = GetUV(hit); //validate uv
+    hit.uv = frac(GetUV(hit)); //validate uv
     hit.materialID = voxel[mapPos];
     return hit;
 }
@@ -83,6 +83,10 @@ bool3 lessThanEqual(float3 a, float3 b)
 
 RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
 {
+    //Center offset
+    //ro -= sceneData.voxelSizes/2;
+
+
     int maxStep = sceneData.settings.maxSteps;
     Texture3D<uint> voxel = sceneData.voxel;
 
@@ -94,6 +98,9 @@ RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
 	int3 rayStep = int3(sign(rd));
 	float3 sideDist = (sign(rd) * (float3(mapPos) - ro) + (sign(rd) * 0.5) + 0.5) * deltaDist; 
     
+    //try offset 
+    //mapPos -= sceneData.voxelSizes/2;
+
     bool3 mask;
 	
     int i;

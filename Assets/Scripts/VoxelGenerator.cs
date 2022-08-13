@@ -28,9 +28,12 @@ public class VoxelGenerator : MonoBehaviour
         voxelGeneratorShader.SetFloat("iTime", t);
         AddShaderParameters();
 
-        int x = resolution.x / 8;
-        int y = resolution.y / 8;
-        int z = resolution.z / 8;
+        //int x = resolution.x / 8;
+        //int y = resolution.y / 8;
+        //int z = resolution.z / 8;
+        int x = resolution.x / 1;
+        int y = resolution.y / 1;
+        int z = resolution.z / 1;
         voxelGeneratorShader.Dispatch(kernelHandle, x, y, z);
 
         return outputTexture;

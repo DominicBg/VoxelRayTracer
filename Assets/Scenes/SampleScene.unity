@@ -154,7 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lightType: 2
   color: {r: 0.7490566, g: 0.89992404, b: 1, a: 1}
-  intensity: 0.2
+  intensity: 0.3
   radius: 0
   penumbraRadius: 0
   volumetricIntensity: 0
@@ -334,12 +334,13 @@ MonoBehaviour:
   t: 0
   material: {fileID: 2100000, guid: 6890ca03f72d4fb498fb6e22539602fc, type: 2}
   isAuto: 1
+  renderDebugMode: 0
   settings:
     reflectionCount: 3
     blurIteration: 1
     shadowIteration: 1
     maxRaySteps: 250
-    volumetricLightSteps: 120
+    volumetricLightSteps: 0
     resolution: {x: 800, y: 600}
 --- !u!4 &870940649
 Transform:
@@ -433,14 +434,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.060588304, y: -0.86934876, z: 0.11020971, w: 0.47792858}
-  m_LocalPosition: {x: 92.6, y: 43.1, z: 64.5}
+  m_LocalRotation: {x: 0.12059043, y: 0.37940952, z: -0.04995019, w: 0.9159757}
+  m_LocalPosition: {x: 15, y: 10, z: 15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 14.45, y: -122.4, z: 0}
+  m_LocalEulerAnglesHint: {x: 15, y: 45, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -467,6 +468,7 @@ GameObject:
   m_Component:
   - component: {fileID: 966591148}
   - component: {fileID: 966591147}
+  - component: {fileID: 966591149}
   m_Layer: 0
   m_Name: VoxelGenerator
   m_TagString: Untagged
@@ -502,6 +504,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &966591149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 966591146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6e5722a91ddea3498ee07c6adf02c68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  generator: {fileID: 966591147}
+  resolutions: {x: 16, y: 16, z: 16}
 --- !u!1 &1092161889
 GameObject:
   m_ObjectHideFlags: 0
@@ -639,11 +655,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lightType: 1
-  color: {r: 0.45660377, g: 0.5994333, b: 1, a: 1}
-  intensity: 1
+  color: {r: 0.92340124, g: 0.45490193, b: 1, a: 1}
+  intensity: 0.2
   radius: 200
   penumbraRadius: 1
-  volumetricIntensity: 0
+  volumetricIntensity: 0.05
 --- !u!4 &1463084690
 Transform:
   m_ObjectHideFlags: 0

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static VoxelRayTracerAPI;
 
 public class VoxelRayTracerTester : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class VoxelRayTracerTester : MonoBehaviour
     public float t;
     public Material material;
     public bool isAuto;
+    public RenderDebugMode renderDebugMode;
 
     public VoxelRayTracerSettings settings;
 
@@ -29,6 +31,8 @@ public class VoxelRayTracerTester : MonoBehaviour
     private void Update()
     {
         if (isAuto) t += Time.deltaTime;
+
+        api.SetRenderDebugMode(renderDebugMode);
 
         //Set Camera pos
         api.SetCameraTransform(mainCamera.transform.position, mainCamera.transform.rotation);
@@ -58,14 +62,17 @@ public class VoxelRayTracerTester : MonoBehaviour
         material.SetTexture("_MainTex", texture);
     }
 
+
+    void OnDestroy()
+    {
+        api.Dispose();
+    }
+
     private void OnValidate()
     {
-        if(Application.isPlaying)
+        if(Application.isPlaying && api != null)
         {
             api.SetSettings(settings);
         }
     }
-
-
-
 }

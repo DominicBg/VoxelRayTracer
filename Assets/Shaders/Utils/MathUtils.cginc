@@ -122,4 +122,53 @@ float4 qInverse(float4 q)
 }
 
 
+
+// RNG
+uint WangHash(uint n)
+{
+    // https://gist.github.com/badboy/6267743#hash-function-construction-principles
+    // Wang hash: this has the property that none of the outputs will
+    // collide with each other, which is important for the purposes of
+    // seeding a random number generator.  This was verified empirically
+    // by checking all 2^32 uints.
+    n = (n ^ 61u) ^ (n >> 16);
+    n *= 9u;
+    n = n ^ (n >> 4);
+    n *= 0x27d4eb2du;
+    n = n ^ (n >> 15);
+
+    return n;
+}
+
+uint NextState(uint state)
+{
+    state ^= state << 13;
+    state ^= state >> 17;
+    state ^= state << 5;
+    return state;
+}
+
+float NextFloat(float xmin, float xmax, inout uint state)
+{
+    state = NextState(state);
+    int n = int(state % 1000u);
+    float t = float(n) / 1000.;   
+    return lerp(xmin, xmax, t);
+}
+
+float2 NextVec2(float2 rmin, float2 rmax, inout uint state)
+{
+    float x = NextFloat(rmin.x, rmax.x, state);
+    float y = NextFloat(rmin.y, rmax.y, state);
+    return float2(x, y);
+}
+
+float3 NextVec3(float3 rmin, float3 rmax, inout uint state)
+{
+    float x = NextFloat(rmin.x, rmax.x, state);
+    float y = NextFloat(rmin.y, rmax.y, state);
+    float z = NextFloat(rmin.z, rmax.z, state);
+    return float3(x, y, z);
+}
+
 #endif

@@ -3,19 +3,22 @@ using UnityEngine;
 
 public class VoxelRayTracerAPI
 {
+    public enum RenderDebugMode { None, Normal, ReflectedDirection, UV, LightOnly}
+
     VoxelRayTracerSettings settings;
     ComputeShader shader;
     ListBuffer<LightData> lightBuffer;
     RenderTexture outputTexture;
     RenderTexture voxel3DTexture;
     Cubemap cubemap;
-
+    Vector3 voxel3DSizes;
 
     int kernelHandle;
 
     Vector3 cameraPos;
     Quaternion cameraRot;
     float fov = 60;
+    RenderDebugMode debugMode;
 
     public unsafe VoxelRayTracerAPI(ComputeShader computeShader)
     {
@@ -62,6 +65,7 @@ public class VoxelRayTracerAPI
     public void SetOpaqueVoxelGeometry(RenderTexture voxel3DTexture)
     {
         this.voxel3DTexture = voxel3DTexture;
+        voxel3DSizes = new Vector3(voxel3DTexture.width, voxel3DTexture.height, voxel3DTexture.volumeDepth);
     }
 
     public void SetCubeMap(Cubemap cubemap)
@@ -84,9 +88,17 @@ public class VoxelRayTracerAPI
         shader.SetVector("iCameraPos", cameraPos);
         shader.SetVector("iCameraRot", new Vector4(cameraRot.x, cameraRot.y, cameraRot.z, cameraRot.w));
         shader.SetFloat("iCameraFOV", fov);
+        shader.SetVector("iVoxelSizes", voxel3DSizes);
 
         shader.SetTexture(kernelHandle, "voxel", voxel3DTexture);
         shader.SetTexture(kernelHandle, "cubemap", cubemap);
+
+        //Debugs
+        shader.SetBool("iNormalDebugView", debugMode == RenderDebugMode.Normal);
+        shader.SetBool("iReflectedDirDebugView", debugMode == RenderDebugMode.ReflectedDirection);
+        shader.SetBool("iUVDebugView", debugMode == RenderDebugMode.UV);
+        shader.SetBool("iLightOnlyDebugView", debugMode == RenderDebugMode.LightOnly);
+
 
         lightBuffer.UpdateData(kernelHandle, shader);
 
@@ -131,9 +143,14 @@ public class VoxelRayTracerAPI
         EnsureComputeBuffer();
     }
 
-    void OnDestroy()
+    public void Dispose()
     {
         lightBuffer.Dispose();
+    }
+
+    public void SetRenderDebugMode(RenderDebugMode debugMode)
+    {
+        this.debugMode = debugMode;
     }
 }
 

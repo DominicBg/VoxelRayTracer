@@ -25,6 +25,8 @@ StructuredBuffer<LightData> lightDatas;
 float3 iCameraPos;
 float4 iCameraRot;
 float iCameraFOV;
+float iCameraOrthoSize; //todo implement ortho
+
 int iMaxSteps = 120;
 int iVolumetricLightSteps = 120;
 int iBlurIteration = 1;
@@ -32,6 +34,13 @@ int iShadowIteration = 1;
 float2 iResolution;
 float iTime = 0;
 int iReflectionCount = 2;
+int3 iVoxelSizes;
+
+//Debug
+bool iNormalDebugView;
+bool iReflectedDirDebugView;
+bool iUVDebugView;
+bool iLightOnlyDebugView;
 
 //Local
 SceneData sceneData;
@@ -46,12 +55,7 @@ float getVoxelTransparent(int3 c)
 	return d;
 }
 
-RayHit RayCast(float3 ro, float3 rd)
-{
-    return RayCast(ro, rd, sceneData);
-}
-
-Material GetColor(RayHit hit)
+Material GetColor(inout RayHit hit)
 {
     if(!hit.hasHit)
     {
@@ -67,6 +71,8 @@ Material GetColor(RayHit hit)
 
 float4 RayCastTransparent(float3 rayPos, float3 rayDir, float maxDist)
 {
+    rayPos -= iVoxelSizes/2;
+
 	int3 mapPos = int3(floor(rayPos + 0.));
     float rayLength = length(rayDir);
 	float3 deltaDist = abs(float3(rayLength, rayLength, rayLength) / rayDir);
@@ -78,6 +84,7 @@ float4 RayCastTransparent(float3 rayPos, float3 rayDir, float maxDist)
     float transparency = 0.025;
     float4 sumColor = 0.0;
     
+    [loop]
 	for (int i = 0; i < iMaxSteps; i++) 
     {
         //optimize this
@@ -113,9 +120,9 @@ float3 Blend(float3 opaque, float4 transparent)
 }
 
 
-void RenderRay(float3 ro, float3 rd, out Material material, out float obstruction, out RayHit hit)
+void RenderRay(float3 ro, float3 rd, out Material material, out float obstruction, inout RayHit hit)
 {
-    hit = RayCast(ro, rd);
+    hit = RayCast(ro, rd, sceneData);
 
     material = GetColor(hit);
 
@@ -146,6 +153,8 @@ void PrepareSceneData()
     sceneData.lightDatas = lightDatas;
     sceneData.settings = settings;
     sceneData.voxel = voxel;
+    sceneData.time = iTime;
+    sceneData.voxelSizes = iVoxelSizes;
 }
 
 [numthreads(8,8,1)]
@@ -159,7 +168,34 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     PerspectiveCam(iCameraPos, iCameraRot, uv, iCameraFOV, ro, rd);
 
 	RayHit hit;
-    
+    if(iNormalDebugView)
+    {            
+        hit = RayCast(ro, rd, sceneData);
+        Material material = GetColor(hit); //can transform the hit
+        Result[id.xy] = float4(hit.normal * 0.5 + 0.5, 1.0);
+        return;
+    }
+    if(iReflectedDirDebugView)
+    {            
+        hit = RayCast(ro, rd, sceneData);
+        Material material = GetColor(hit); //can transform the hit
+        Result[id.xy] = float4(hit.reflDir * 0.5 + 0.5, 1.0);
+        return;
+    }
+    if(iUVDebugView)
+    {     
+        hit = RayCast(ro, rd, sceneData);
+        Result[id.xy] = float4(hit.uv, 0.0, 1.0);
+        return;
+    }
+    if(iLightOnlyDebugView)
+    {     
+        hit = RayCast(ro, rd, sceneData);
+        Result[id.xy] = float4(BasicLight(sceneData, hit), 1.0);
+        return;
+    }
+
+
     Material reflMaterial[MAXREFLECTIONCOUNT];
     float obstructions[MAXREFLECTIONCOUNT];
 
@@ -169,22 +205,19 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     int i = 0;
     for(i = 0; i < iReflectionCount; i++)
     {
-        if(blur == 0.0 || iBlurIteration == 1)
-        {
-            RenderRay(ro, rd, reflMaterial[i], obstructions[i], hit);
-        }
-        else    
-        {
-            //main ray
-            RenderRay(ro, rd, reflMaterial[i], obstructions[i], hit);
+        RenderRay(ro, rd, reflMaterial[i], obstructions[i], hit);
 
+    
+        if(i != 0 && reflMaterial[i].blur > 0 && iBlurIteration > 0)
+        {
             float3 blurCol = reflMaterial[i].color;
             for(int j = 0; j < iBlurIteration; j++)
             {
-                float3 shitRandom = blur * ShittyRandom(float(j));
+                float3 shitRandom = reflMaterial[i].blur * ShittyRandom(float(j));
                 Material reflMat;
                 float obstruction;
-                RenderRay(ro, normalize(rd + shitRandom), reflMat, obstruction, hit);
+                RayHit blurHit;
+                RenderRay(ro, normalize(rd + shitRandom), reflMat, obstruction, blurHit);
 
                 blurCol += reflMat.color;
                 obstructions[i] += obstruction;
@@ -193,10 +226,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             reflMaterial[i].color = blurCol / float(iBlurIteration + 1);
             obstructions[i] /= float(iBlurIteration + 1);
         }
-             
+               
         ro = hit.pos + hit.normal * 0.01;
         rd = hit.reflDir;
-        blur = 0.01;
         lastReflectionId = i;
 
         if(obstructions[i] > 0.95 || !hit.hasHit)
@@ -210,15 +242,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     for(i = lastReflectionId - 1; i >= 0; i--)
     {
-        //Make transparency remove some reflectivity
-
-        //TODO take material reflection here
         material = reflMaterial[i];
         float reflection = material.reflection * (1. - obstructions[i]); 
-        //float reflection = 0.8 * (sin(iTime) * 0.5 + 0.5) * (1. - obstructions[i]); 
 
         col = lerp(material.color, col, reflection);
-        //col = mix(reflColors[i], col, REFLECTION * Luminance(reflColors[i]));
     }    
     
 

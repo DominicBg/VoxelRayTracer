@@ -1,16 +1,17 @@
 
 #include "VoxelRayTracerDatas.cginc"
-#include "Materials/VoxelRayTracerMaterial1.cginc"
+#include "Materials/VoxelRayTracerMaterial_Water.cginc"
 #include "Materials/VoxelRayTracerMaterial2.cginc"
 #include "Materials/VoxelRayTracerMaterial3.cginc"
 
-Material GetColor(uint materialID, in SceneData sceneData, in RayHit hit)
+Material GetColor(uint materialID, in SceneData sceneData, inout RayHit hit)
 {
     switch(materialID)
     {
-        case 1: return GetColorMaterial1(sceneData, hit);
+        case 1: return GetColorMaterial_Water(sceneData, hit);
         case 2: return GetColorMaterial2(sceneData, hit);
         case 3: return GetColorMaterial3(sceneData, hit);
+        default:break;
     }
 
     Material material;
