@@ -13,6 +13,7 @@
 
 //#include "Utils/LightUtils.cginc"
 #include "Utils/MathUtils.cginc"
+#include "Utils/NoiseUtils.cginc"
 
 SamplerState PointClampSampler;
 Texture3D<uint> voxel;
@@ -23,7 +24,7 @@ RWTexture2D<float4> Result;
 StructuredBuffer<LightData> lightDatas;
 
 #define MAXREFLECTIONCOUNT 10
-//#define HD
+#define HD
 
 //Inputs
 
@@ -55,6 +56,7 @@ bool iNormalDebugView;
 bool iReflectedDirDebugView;
 bool iUVDebugView;
 bool iLightOnlyDebugView;
+bool iBlurDebugView;
 
 //Local
 SceneData sceneData;
@@ -146,11 +148,17 @@ void RenderRay(float3 ro, float3 rd, out Material material, out float obstructio
     float maxDist = hit.hasHit ? hit.dist : 9999;
     obstruction = 0;
 
+    // #ifdef HD
+    //     float4 transparentColor = RayCastTransparent(ro, rd, maxDist);
+    //     float4 volumetricLight = CalculateVolumetricLight(ro, rd, maxDist, sceneData);
+    //     material.color = Blend(material.color, transparentColor + volumetricLight);
+    //     obstruction = transparentColor.a + volumetricLight.a;
+    // #endif
+
     #ifdef HD
-        float4 transparentColor = RayCastTransparent(ro, rd, maxDist);
         float4 volumetricLight = CalculateVolumetricLight(ro, rd, maxDist, sceneData);
-        material.color = Blend(material.color, transparentColor + volumetricLight);
-        obstruction = transparentColor.a + volumetricLight.a;
+        material.color = Blend(material.color, volumetricLight);
+        obstruction = volumetricLight.a;
     #endif
 }
 
@@ -216,7 +224,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     }
 
     //Center voxels at 0,0,0
-    ro += float3(iVoxelSizes.x, 0.0, iVoxelSizes.z) * 0.5;
+    //ro += float3(iVoxelSizes.x, 0.0, iVoxelSizes.z) * 0.5;
 
     RayHit hit;
     if (iNormalDebugView)
@@ -245,12 +253,17 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         Result[id.xy] = float4(BasicLight(sceneData, hit), 1.0);
         return;
     }
+    if (iBlurDebugView)
+    {    
+        hit = RayCast(ro, rd, sceneData);
+        Material material = GetColor(hit);
+        Result[id.xy] = float4(material.blur, material.blur, material.blur, 1);
+        return;
+    }
 
 
     Material reflMaterial[MAXREFLECTIONCOUNT];
     float obstructions[MAXREFLECTIONCOUNT];
-
-    float blur = 0.0;
     
     int lastReflectionId = 0;
     int i = 0;
@@ -258,17 +271,24 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     {
         RenderRay(ro, rd, reflMaterial[i], obstructions[i], hit);
 
-        #ifdef HD
-            if (i != 0 && reflMaterial[i].blur > 0 && iBlurIteration > 0)
+#ifdef HD
+        if (i > 0 && iBlurIteration > 0)
+        {
+            //uint rngState = GenerateRngState(i * int(snoise(hit.pos)) * 26);
+            uint rngState = GenerateRngState(i);
+            float blur = reflMaterial[i - 1].blur;
+            if(blur > 0)
             {
                 float3 blurCol = reflMaterial[i].color;
                 for (int j = 0; j < iBlurIteration; j++)
                 {
-                    float3 shitRandom = reflMaterial[i].blur * ShittyRandom(float(j));
+                    //float3 shitRandom = blur * ShittyRandom(float(j));
                     Material reflMat;
                     float obstruction;
                     RayHit blurHit;
-                    RenderRay(ro, normalize(rd + shitRandom), reflMat, obstruction, blurHit);
+                    //(ro, normalize(rd + shitRandom), reflMat, obstruction, blurHit);
+                    float3 randomRd = NextRandomDirection(rd, 0, rngState);
+                    RenderRay(ro, randomRd, reflMat, obstruction, blurHit);
 
                     blurCol += reflMat.color;
                     obstructions[i] += obstruction;
@@ -277,13 +297,14 @@ void CSMain(uint3 id : SV_DispatchThreadID)
                 reflMaterial[i].color = blurCol / float(iBlurIteration + 1);
                 obstructions[i] /= float(iBlurIteration + 1);
             }
-        #endif
+        }
+#endif
         
         ro = hit.pos + hit.normal * 0.01;
         rd = hit.reflDir;
         lastReflectionId = i;
 
-        if (obstructions[i] > 0.95 || !hit.hasHit)
+        if (obstructions[i] > 0.99 || !hit.hasHit)
         {
             break;
         }

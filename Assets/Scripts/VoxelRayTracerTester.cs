@@ -18,7 +18,7 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     public VoxelRayTracerSettings settings;
 
-    LightDataComponent[] lightDataComponents;
+    public LightDataComponent[] lightDataComponents;
     List<LightData> tempLightData = new List<LightData>();
 
     VoxelRayTracerAPI api;

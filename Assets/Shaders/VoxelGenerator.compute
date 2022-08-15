@@ -4,6 +4,7 @@
 RWTexture3D<uint> Result;
 #include "Utils/MathUtils.cginc"
 #include "Utils/NoiseUtils.cginc"
+#include "Utils/SDFUtils.cginc"
 
 float iTime;
 
@@ -14,11 +15,27 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float2 pos = id.xz ;
 
+    //Lamp
+    int lampHeight = 25;
+    int3 center = 50;
+
+    if(distance(id.xz, center.xz) < 3 && id.y < lampHeight)
+    {   
+        Result[id] = 3;
+        return;
+    }
+
+    if(sdBoxFrame(id - float3(50, 25, 50), 5, 1) < 0)
+    {
+        Result[id] = 3;
+        return;
+    }
+
+
     int waterLevel = 6;
     float groundValue = waterLevel + 8 * fbm_4(pos * 0.03);
 
     groundValue = max(groundValue, waterLevel);
-
 
     if(id.y < groundValue)
     {

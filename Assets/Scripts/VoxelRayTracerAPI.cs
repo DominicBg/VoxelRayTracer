@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class VoxelRayTracerAPI
 {
-    public enum RenderDebugMode { None, Normal, ReflectedDirection, UV, LightOnly }
+    public enum RenderDebugMode { None, Normal, ReflectedDirection, UV, Light, Blur }
 
     VoxelRayTracerSettings settings;
     ComputeShader shader;
@@ -19,7 +19,7 @@ public class VoxelRayTracerAPI
 
     int kernelHandle;
 
-
+    bool centerAtZero = true;
     bool useFreeCamera;
     bool isCameraOrtho;
 
@@ -53,15 +53,7 @@ public class VoxelRayTracerAPI
             outputTexture.enableRandomWrite = true;
             outputTexture.Create();
         }
-
-        shader.SetVector("iResolution", new Vector4(settings.resolution.x, settings.resolution.y, 1, 1));
-
-        //shader.SetInt("iMaxSteps", settings.maxRaySteps);
-        shader.SetInt("iReflectionCount", settings.reflectionCount);
-        shader.SetInt("iBlurIteration", settings.blurIteration);
-        shader.SetInt("iShadowIteration", settings.shadowIteration);
-        shader.SetInt("iVolumetricLightSteps", settings.volumetricLightSteps);
-
+    
         shader.SetTexture(kernelHandle, "Result", outputTexture);
     }
 
@@ -70,6 +62,7 @@ public class VoxelRayTracerAPI
     {
         this.mainCamera = camera;
         this.useFreeCamera = false;
+        centerAtZero = false;
     }
 
     public void SetCameraTransform(Vector3 cameraPos, Quaternion cameraRot)
@@ -77,8 +70,9 @@ public class VoxelRayTracerAPI
         this.cameraPos = cameraPos;
         this.cameraRot = cameraRot;
         this.useFreeCamera = true;
-
+        centerAtZero = true;
     }
+
     public void SetCameraFOV(float fov)
     {
         this.fov = fov;
@@ -114,7 +108,18 @@ public class VoxelRayTracerAPI
     public void SetLights(List<LightData> lights)
     {
         lightBuffer.Clear();
-        lightBuffer.AddRange(lights);
+        for (int i = 0; i < lights.Count; i++)
+        {
+            var light = lights[i];
+            //light.position = centerAtZero ? CenterAtZero(light.position) : light.position;
+            lightBuffer.Add(light);
+        }
+    }
+
+    Vector3 CenterAtZero(Vector3 pos)
+    {
+        //pos += new Vector3(voxel3DSizes.x, 0.0f, voxel3DSizes.z) * 0.5f;
+        return pos;
     }
 
     public RenderTexture RenderToTexture(float t)
@@ -125,10 +130,12 @@ public class VoxelRayTracerAPI
         shader.SetBool("iUseFreeCamera", useFreeCamera);
         shader.SetBool("iCameraIsOrtho", isCameraOrtho);
 
+        Vector3 alignedCameraPos = centerAtZero ? CenterAtZero(cameraPos) : cameraPos;
+
         //Free Cam
         if (useFreeCamera)
         {
-            shader.SetVector("iCameraPos", cameraPos);
+            shader.SetVector("iCameraPos", alignedCameraPos);
             shader.SetVector("iCameraRot", new Vector4(cameraRot.x, cameraRot.y, cameraRot.z, cameraRot.w));
             shader.SetFloat("iCameraFOV", fov);
         }
@@ -139,6 +146,11 @@ public class VoxelRayTracerAPI
             shader.SetMatrix("iCameraInverseProjection", mainCamera.projectionMatrix.inverse);
         }
 
+        shader.SetVector("iResolution", new Vector4(settings.resolution.x, settings.resolution.y, 1, 1));
+        shader.SetInt("iReflectionCount", settings.reflectionCount);
+        shader.SetInt("iBlurIteration", settings.blurIteration);
+        shader.SetInt("iShadowIteration", settings.shadowIteration);
+        shader.SetInt("iVolumetricLightSteps", settings.volumetricLightSteps);
 
 
         shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
@@ -160,7 +172,8 @@ public class VoxelRayTracerAPI
         shader.SetBool("iNormalDebugView", debugMode == RenderDebugMode.Normal);
         shader.SetBool("iReflectedDirDebugView", debugMode == RenderDebugMode.ReflectedDirection);
         shader.SetBool("iUVDebugView", debugMode == RenderDebugMode.UV);
-        shader.SetBool("iLightOnlyDebugView", debugMode == RenderDebugMode.LightOnly);
+        shader.SetBool("iLightOnlyDebugView", debugMode == RenderDebugMode.Light);
+        shader.SetBool("iBlurDebugView", debugMode == RenderDebugMode.Blur);
 
 
         lightBuffer.UpdateData(kernelHandle, shader);

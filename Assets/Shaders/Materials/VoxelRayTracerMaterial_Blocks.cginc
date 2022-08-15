@@ -1,8 +1,7 @@
 #include "VoxelRayTracerDatas.cginc"
 
 
-
-Material GetColorMaterial3(in SceneData sceneData, inout RayHit hit)
+Material GetColorMaterial_Blocks(in SceneData sceneData, inout RayHit hit)
 {
     Material material;
     material.reflection = 0.0;

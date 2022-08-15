@@ -39,14 +39,6 @@ float3 ShittyRandom(float x)
     return float3(sin(70.52 * x), cos(31.527 * x), sin(45.42 * x));
 }
 
-float sdSphere(float3 p, float d) { return length(p) - d; } 
-
-float sdBox( float3 p, float3 b )
-{
-  float3 d = abs(p) - b;
-  return min(max(d.x,max(d.y,d.z)),0.0) +
-         length(max(d,0.0));
-}
 
 float2 rotate2d(float2 v, float a) {
 	float sinA = sin(a);
@@ -246,6 +238,28 @@ float3 Nextfloat3(float3 rmin, float3 rmax, inout uint state)
     float z = NextFloat(rmin.z, rmax.z, state);
     return float3(x, y, z);
 }
+
+float3 NextRandomDirection(float3 direction, float spread, inout uint state) 
+{
+  // Make an orthogonal basis whose third vector is along `direction'
+  float3 b3 = normalize(direction);
+  float3 different = (abs(b3.x) < 0.5) ? float3(1.0, 0.0, 0.0) : float3(0.0, 1.0, 0.0);
+  float3 b1 = normalize(cross(b3, different));
+  float3 b2 = cross(b1, b3);
+ 
+  // Pick (x,y,z) randomly around (0,0,1)
+  //float z = NextFloat((spread * PI), 1, state);
+  float z = NextFloat(0, (spread * PI), state);
+  //float r = sqrt(1.0f - z * z);
+  float r = sqrt(z);
+  float theta = NextFloat(-PI, +PI, state);
+  float x = r * cos(theta);
+  float y = r * sin(theta);
+ 
+  // Construct the vector that has coordinates (x,y,z) in the basis formed by b1, b2, b3
+  return x * b1 + y * b2 + z * b3;
+}
+ 
 
 ///
 #endif
