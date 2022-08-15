@@ -62,8 +62,8 @@ Material GetColorMaterial_Water(in SceneData sceneData, inout RayHit hit)
     //float dx = sin(sceneData.time + xz + h ) - sin(sceneData.time + xz - h) / (2 * h);
 
     //float wave = 0.1 * sin(sceneData.time + hit.pos.x + hit.pos.z);
-    float3 randomPos = hit.pos + hit.normal + ShittyRandom(hit.pos * 5.5 + sceneData.time) * 0.5;
-    hit.normal = normalize(randomPos - hit.pos);
+    //float3 randomPos = hit.pos + hit.normal + ShittyRandom(hit.pos * 5.5 + sceneData.time) * 0.5;
+    //hit.normal = normalize(randomPos - hit.pos);
     //hit.normal = GetNormal(hit.pos, sceneData.time);
     //hit.reflDir = reflect(hit.rd, hit.normal);
     material.color = BasicLight(sceneData, hit);

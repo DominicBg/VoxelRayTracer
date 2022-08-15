@@ -91,7 +91,7 @@ RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
     //Optim to start the ray at the voxel structure
     //BoxIntersectionResult voxelMapIntersection = BoxIntersection(-sceneData.voxelSizes/2, sceneData.voxelSizes/2, ro, rd);
     float skippedDist = 0;
-    if (any(ro < 0) || any(ro > sceneData.voxelSizes))
+    if (any(ro <= 0) || any(ro >= sceneData.voxelSizes))
     {
         BoxIntersectionResult voxelMapIntersection = BoxIntersection(0, sceneData.voxelSizes, ro, rd);
         if (!voxelMapIntersection.hasHit)
@@ -108,9 +108,9 @@ RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
         ro = startPos;
     }
 
-
     int maxStep = sceneData.settings.maxSteps;
-    //TODO add dynamic steps
+
+    //TODO add dynamic steps based on intersection depth or length to edge
     //int maxStep = floor(distance(voxelMapIntersection.dist1, voxelMapIntersection.dist2) * 2) + 1;
     Texture3D<uint> voxel = sceneData.voxel;
 

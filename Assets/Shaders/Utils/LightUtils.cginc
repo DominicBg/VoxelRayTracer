@@ -23,19 +23,19 @@ float3 DiffuseLight(in LightData lightData, in RayHit hit)
 float SpecularLight(float3 lightPos, float specularStrength, float power, float3 position, float3 viewDir, float3 normal)
 {
     float3 ldir = normalize(lightPos - position);
-    float3 reflectDir = reflect(ldir, normal);  
+    float3 reflectDir = reflect(ldir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), power);
-    return specularStrength * spec;  
+    return specularStrength * spec;
 }
 
 float3 SpecularLight(in LightData lightData, in RayHit hit)
 {
-    return lightData.intensity * lightData.color * SpecularLight(lightData.position,  0.25, 4, hit.pos, hit.rd, hit.normal);
+    return lightData.intensity * lightData.color * SpecularLight(lightData.position, 0.25, 4, hit.pos, hit.rd, hit.normal);
 }
 
 float3 SpecularLight(in LightData lightData, in RayHit hit, float specularStrength, float power)
 {
-    return lightData.intensity * lightData.color * SpecularLight(lightData.position,  specularStrength, power, hit.pos, hit.rd, hit.normal);
+    return lightData.intensity * lightData.color * SpecularLight(lightData.position, specularStrength, power, hit.pos, hit.rd, hit.normal);
 }
 
 
@@ -44,14 +44,14 @@ float HardShadow(float3 lightPos, float lightRadius, float3 position, float3 nor
     float3 diff = (lightPos - position);
     float lightDistsq = dot(diff, diff);
 
-    if(lightDistsq > lightRadius * lightRadius) 
+    if (lightDistsq > lightRadius * lightRadius)
         return 1;
 
     float lightDist = sqrt(lightDistsq);
     float3 ldir = diff / lightDist;
     
     RayHit shadowRay = RayCast(position + normal * 0.001, ldir, sceneData);
-    if(shadowRay.hasHit && shadowRay.dist < lightDist)
+    if (shadowRay.hasHit && shadowRay.dist < lightDist)
         return 0;
 
     return 1;
@@ -68,7 +68,7 @@ float SoftShadow(float3 lightPos, float lightRadius, float penumbraRadius, float
 
     float3 diff = (lightPos - position);
     float lightDistsq = dot(diff, diff);
-    if(lightDistsq > lightRadius *  lightRadius) 
+    if (lightDistsq > lightRadius * lightRadius)
         return 0;
 
     float lightDist = sqrt(lightDistsq);
@@ -79,19 +79,19 @@ float SoftShadow(float3 lightPos, float lightRadius, float penumbraRadius, float
     int shadowHits = 0;
 
     [loop]
-    for(int i = 0; i < shadowIterations; i++)
+    for (int i = 0; i < shadowIterations; i++)
     {
         float3 tempLightPos = lightPos + penumbraRadius * ShittyRandom(float(i));
         float3 templdir = normalize(tempLightPos - position);
         
         RayHit shadowRay = RayCast(position + normal * 0.001, templdir, sceneData);
-        if(shadowRay.hasHit && shadowRay.dist < lightDist - penumbraRadius)
+        if (shadowRay.hasHit && shadowRay.dist < lightDist - penumbraRadius)
         {
             shadowHits++;
         }
     }
     float shadowRatio = (float(shadowHits) / float(shadowIterations));
-    return 1 - shadowIntensity * (shadowRatio * shadowRatio * shadowRatio); 
+    return 1 - shadowIntensity * (shadowRatio * shadowRatio * shadowRatio);
 }
 
 float SoftShadow(in LightData lightData, in RayHit hit, in SceneData sceneData)
@@ -104,7 +104,7 @@ float FadeOffIntensity(in LightData lightData, float3 position)
     float3 diff = distance(position, lightData.position);
     float lightDistsq = dot(diff, diff);
 
-    if(lightDistsq > lightData.radius * lightData.radius)
+    if (lightDistsq > lightData.radius * lightData.radius)
     {
         return 0;
     }
@@ -124,17 +124,22 @@ float3 BasicLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
 {
     switch(lightData.type)
     {
-        case LIGHT_TYPE_DIRECTIONAL : 
+        case LIGHT_TYPE_DIRECTIONAL:
             return lightData.intensity * lightData.color * DiffuseLight(lightData.dir, hit.normal);
         
-        case LIGHT_TYPE_POINT : 
+        case LIGHT_TYPE_POINT:
             float3 diffuse = DiffuseLight(lightData, hit);
             float3 spec = SpecularLight(lightData, hit);
+#ifdef HD
             float shadow = (sceneData.settings.shadowIterations > 1) ? SoftShadow(lightData, hit, sceneData) : HardShadow(lightData, hit, sceneData);
+#else
+            float shadow = HardShadow(lightData, hit, sceneData);
+#endif
+
             float fadeOff = FadeOffIntensity(lightData, hit);
             return (diffuse + spec) * shadow * fadeOff;
 
-        case LIGHT_TYPE_AMBIENT :
+        case LIGHT_TYPE_AMBIENT:
             return lightData.intensity * lightData.color;
     }
 
@@ -144,7 +149,7 @@ float3 BasicLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
 float3 BasicLight(in SceneData sceneData, in RayHit hit)
 {
     float3 colSum = 0;
-    for(uint i = 0; i < sceneData.lightDatas.Length; i++)
+    for (uint i = 0; i < sceneData.lightDatas.Length; i++)
     {
         colSum += BasicLight(sceneData.lightDatas[i], hit, sceneData);
     }
@@ -162,29 +167,30 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, LightData lightData, float
     float4 lightSum = 0.;
     
     [loop]
-    for(int i = 0; i < steps; i++)
+    for (int i = 0; i < steps; i++)
     {
         float currentDist = float(i) * dx;
-        if(currentDist > maxDist) break;
+        if (currentDist > maxDist) break;
         
         float3 p = ro + rd * currentDist;
         float3 d = lightData.position - p;
         float l = length(d);
 
-        if(l > lightData.radius)
+        if (l > lightData.radius)
         {
             continue;
         }
         
-        RayHit hit = RayCast(p, d/l, sceneData);
-        if(!hit.hasHit || l < hit.dist)
+        RayHit hit = RayCast(p, d / l, sceneData);
+        if (!hit.hasHit || l < hit.dist)
         {
             //float vNoise = VolumetricNoise(p);
-            //vNoise = Remap(0., 1., 0.5, 1., vNoise); 
+            //vNoise = Remap(0., 1., 0.5, 1., vNoise);
             
             float fadeOff = FadeOffIntensity(lightData, p);
             lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * fadeOff;
             //todo try this shit *= exp(-cloud * dStep);
+
         }
     }
     return lightSum;
@@ -193,9 +199,9 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, LightData lightData, float
 float4 CalculateVolumetricLight(float3 ro, float3 rd, float maxDist, in SceneData sceneData)
 {
     float4 volumetricLightSum = 0;
-    for(uint i = 0; i < sceneData.lightDatas.Length; i++)
+    for (uint i = 0; i < sceneData.lightDatas.Length; i++)
     {
-        if(sceneData.lightDatas[i].type == LIGHT_TYPE_POINT && sceneData.lightDatas[i].volumetricIntensity > 0 && sceneData.lightDatas[i].intensity > 0)
+        if (sceneData.lightDatas[i].type == LIGHT_TYPE_POINT && sceneData.lightDatas[i].volumetricIntensity > 0 && sceneData.lightDatas[i].intensity > 0)
         {
             volumetricLightSum += CalculateVolumetricLight(ro, rd, sceneData.lightDatas[i], maxDist, sceneData);
         }

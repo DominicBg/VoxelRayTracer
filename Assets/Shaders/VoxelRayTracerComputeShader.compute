@@ -23,6 +23,7 @@ RWTexture2D<float4> Result;
 StructuredBuffer<LightData> lightDatas;
 
 #define MAXREFLECTIONCOUNT 10
+//#define HD
 
 //Inputs
 
@@ -60,7 +61,7 @@ Settings settings;
 
 Material GetColor(inout RayHit hit)
 {
-    if(!hit.hasHit)
+    if (!hit.hasHit)
     {
         Material material;
         material.blur = 0;
@@ -76,50 +77,48 @@ float4 RayCastTransparent(float3 ro, float3 rd, float maxDist)
     //Optim to start the ray at the voxel structure
     //BoxIntersectionResult voxelMapIntersection = BoxIntersection(-sceneData.voxelSizes/2, sceneData.voxelSizes/2, ro, rd);
     float skippedDist = 0;
-    if (any(ro < 0) || any(ro > sceneData.voxelSizes))
+    if (any(ro <= 0) || any(ro >= sceneData.voxelSizes))
     {
         BoxIntersectionResult voxelMapIntersection = BoxIntersection(0, sceneData.voxelSizes, ro, rd);
-
         if (!voxelMapIntersection.hasHit)
         {
             return 0;
         }
-
         float3 startPos = ro + rd * voxelMapIntersection.dist1 - rd * 0.1;
         float skippedDist = distance(startPos, ro);
         ro = startPos;
     }
 
-	int3 mapPos = int3(floor(ro + 0.));
+    int3 mapPos = int3(floor(ro + 0.));
     float rayLength = length(rd);
-	float3 deltaDist = abs(float3(rayLength, rayLength, rayLength) / rd);
-	int3 rayStep = int3(sign(rd));
-	float3 sideDist = (sign(rd) * (float3(mapPos) - ro) + (sign(rd) * 0.5) + 0.5) * deltaDist; 
-    
+    float3 deltaDist = abs(float3(rayLength, rayLength, rayLength) / rd);
+    int3 rayStep = int3(sign(rd));
+    float3 sideDist = (sign(rd) * (float3(mapPos) - ro) + (sign(rd) * 0.5) + 0.5) * deltaDist;
+
     bool3 mask;
-	
+
     float transparency = 0.125;
     float4 sumColor = 0.0;
-    
+
     [loop]
-	for (int i = 0; i < iMaxSteps; i++) 
+    for (int i = 0; i < iMaxSteps; i++)
     {
         //optimize this
-        if(distancesq(float3(mapPos), ro) > maxDist * maxDist) break;
+        if (distancesq(float3(mapPos), ro) > maxDist * maxDist) break;
         
-		if (voxelTransparent[mapPos] != 0)
+        if (voxelTransparent[mapPos] != 0)
         {
             RayHit hit = CalculateRayHit(ro, rd, mapPos, mask, skippedDist, voxelTransparent);
             float3 col = GetColor(hit).color;
             float boxDepth = abs(hit.dist - hit.dist2);
-            sumColor += float4(col, 1.0) * boxDepth * transparency;          
+            sumColor += float4(col, 1.0) * boxDepth * transparency;
         }
         mask = lessThanEqual(sideDist.xyz, min(sideDist.yzx, sideDist.zxy));
 
         sideDist += float3(mask) * deltaDist;
         mapPos += int3(float3(mask)) * rayStep;
-	}
-	
+    }
+
     return saturate(sumColor);
 }
 
@@ -133,7 +132,7 @@ float3 Blend(float3 opaque, float4 transparent)
     //return mix(opaque, transparent.rgb, transparent.a);
     
     //additive
-    return saturate(opaque + transparent.rgb *transparent.a);
+    return saturate(opaque + transparent.rgb * transparent.a);
 }
 
 
@@ -143,13 +142,15 @@ void RenderRay(float3 ro, float3 rd, out Material material, out float obstructio
 
     material = GetColor(hit);
 
-    float maxDist = hit.hasHit ?  hit.dist : 9999;
+    float maxDist = hit.hasHit ? hit.dist : 9999;
+    obstruction = 0;
 
+#ifdef HD
     float4 transparentColor = RayCastTransparent(ro, rd, maxDist);
-    float4 volumetricLight = CalculateVolumetricLight(ro, rd, maxDist, sceneData);   
+    float4 volumetricLight = CalculateVolumetricLight(ro, rd, maxDist, sceneData);
     material.color = Blend(material.color, transparentColor + volumetricLight);
-
     obstruction = transparentColor.a + volumetricLight.a;
+#endif
 }
 
 void PerspectiveCam(float3 camPos, float4 camRot, float2 uv, float fov, out float3 ro, out float3 rd)
@@ -174,16 +175,16 @@ void PrepareSceneData()
     sceneData.voxelSizes = iVoxelSizes;
 }
 
-[numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
 {
     PrepareSceneData();
 
     float2 uv = (float2(id.xy) / iResolution.xy) * 2.0 - 1.0;
     float3 ro, rd;
 
-    if(iUseFreeCamera)
-    {   
+    if (iUseFreeCamera)
+    {
         PerspectiveCam(iCameraPos, iCameraRot, uv, iCameraFOV, ro, rd);
     }
     else
@@ -192,31 +193,31 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
     //Center voxels at 0,0,0
-    //ro += float3(iVoxelSizes.x, 0.0, iVoxelSizes.z) * 0.5;
+    ro += float3(iVoxelSizes.x, 0.0, iVoxelSizes.z) * 0.5;
 
-	RayHit hit;
-    if(iNormalDebugView)
-    {            
+    RayHit hit;
+    if (iNormalDebugView)
+    {
         hit = RayCast(ro, rd, sceneData);
         Material material = GetColor(hit); //can transform the hit
         Result[id.xy] = float4(hit.normal * 0.5 + 0.5, 1.0);
         return;
     }
-    if(iReflectedDirDebugView)
-    {            
+    if (iReflectedDirDebugView)
+    {
         hit = RayCast(ro, rd, sceneData);
         Material material = GetColor(hit); //can transform the hit
         Result[id.xy] = float4(hit.reflDir * 0.5 + 0.5, 1.0);
         return;
     }
-    if(iUVDebugView)
-    {     
+    if (iUVDebugView)
+    {
         hit = RayCast(ro, rd, sceneData);
         Result[id.xy] = float4(hit.uv, 0.0, 1.0);
         return;
     }
-    if(iLightOnlyDebugView)
-    {     
+    if (iLightOnlyDebugView)
+    {
         hit = RayCast(ro, rd, sceneData);
         Result[id.xy] = float4(BasicLight(sceneData, hit), 1.0);
         return;
@@ -227,18 +228,18 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float obstructions[MAXREFLECTIONCOUNT];
 
     float blur = 0.0;
-        
+    
     int lastReflectionId = 0;
     int i = 0;
-    for(i = 0; i < iReflectionCount; i++)
+    for (i = 0; i < iReflectionCount; i++)
     {
         RenderRay(ro, rd, reflMaterial[i], obstructions[i], hit);
 
-    
-        if(i != 0 && reflMaterial[i].blur > 0 && iBlurIteration > 0)
+#ifdef HD
+        if (i != 0 && reflMaterial[i].blur > 0 && iBlurIteration > 0)
         {
             float3 blurCol = reflMaterial[i].color;
-            for(int j = 0; j < iBlurIteration; j++)
+            for (int j = 0; j < iBlurIteration; j++)
             {
                 float3 shitRandom = reflMaterial[i].blur * ShittyRandom(float(j));
                 Material reflMat;
@@ -253,12 +254,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             reflMaterial[i].color = blurCol / float(iBlurIteration + 1);
             obstructions[i] /= float(iBlurIteration + 1);
         }
-               
+#endif
+        
         ro = hit.pos + hit.normal * 0.01;
         rd = hit.reflDir;
         lastReflectionId = i;
 
-        if(obstructions[i] > 0.95 || !hit.hasHit)
+        if (obstructions[i] > 0.95 || !hit.hasHit)
         {
             break;
         }
@@ -267,13 +269,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     Material material = reflMaterial[lastReflectionId];
     float3 col = material.color;
 
-    for(i = lastReflectionId - 1; i >= 0; i--)
+    for (i = lastReflectionId - 1; i >= 0; i--)
     {
         material = reflMaterial[i];
-        float reflection = material.reflection * (1. - obstructions[i]); 
+        float reflection = material.reflection * (1. - obstructions[i]);
 
         col = lerp(material.color, col, reflection);
-    }    
+    }
     
 
     Result[id.xy] = float4(col, 1.0);
