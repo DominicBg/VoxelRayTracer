@@ -13,7 +13,8 @@ public class VoxelRayTracerTester : MonoBehaviour
     public Material material;
     public bool isAuto;
     public RenderDebugMode renderDebugMode;
-
+    public bool useFreeCamera;
+    public bool useOrthoCamera;
 
     public VoxelRayTracerSettings settings;
 
@@ -36,22 +37,39 @@ public class VoxelRayTracerTester : MonoBehaviour
         api.SetRenderDebugMode(renderDebugMode);
 
         //Set Camera pos
-        api.SetCamera(mainCamera);
-        // api.SetCameraTransform(mainCamera.transform.position, mainCamera.transform.rotation);
-        //api.SetCameraFOV(mainCamera.fieldOfView);
+        if (useFreeCamera)
+        {
+            api.SetCameraTransform(mainCamera.transform.position, mainCamera.transform.rotation);
+        }
+        else
+        {
+            api.SetCamera(mainCamera);
+        }
+
+        if(useOrthoCamera)
+        {
+            api.SetCameraOrtho();
+            api.SetCameraFOV(mainCamera.orthographicSize);
+        }
+        else
+        {
+            api.SetCameraPerspective();
+            api.SetCameraFOV(mainCamera.fieldOfView);
+        }
+
 
         //Create geometry
         var voxel = voxelGenerator.Generate(t);
         api.SetOpaqueVoxelGeometry(voxel);
 
-        if(voxelGenerator.voxelGeneratorShaderTransparent != null)
+        if (voxelGenerator.voxelGeneratorShaderTransparent != null)
         {
             var voxelTr = voxelGenerator.GenerateTransparent(t);
             api.SetTransparentVoxelGeometry(voxelTr);
         }
-        
+
         //Add cubemap
-        if(cubemap != null)
+        if (cubemap != null)
             api.SetCubeMap(cubemap);
 
         //Add lights
@@ -107,7 +125,7 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     private void OnValidate()
     {
-        if(Application.isPlaying && api != null)
+        if (Application.isPlaying && api != null)
         {
             api.SetSettings(settings);
         }

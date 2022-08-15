@@ -21,6 +21,7 @@ public class VoxelRayTracerAPI
 
 
     bool useFreeCamera;
+    bool isCameraOrtho;
 
     //Free camera Mode
     Vector3 cameraPos;
@@ -83,6 +84,16 @@ public class VoxelRayTracerAPI
         this.fov = fov;
     }
 
+    public void SetCameraOrtho()
+    {
+        isCameraOrtho = true;
+    }
+
+    public void SetCameraPerspective()
+    {
+        isCameraOrtho = false;
+    }
+
     public void SetOpaqueVoxelGeometry(RenderTexture voxelTexture3D)
     {
         this.voxelTexture3D = voxelTexture3D;
@@ -112,6 +123,7 @@ public class VoxelRayTracerAPI
 
         //If I want to port this outside of unity lol
         shader.SetBool("iUseFreeCamera", useFreeCamera);
+        shader.SetBool("iCameraIsOrtho", isCameraOrtho);
 
         //Free Cam
         if (useFreeCamera)
