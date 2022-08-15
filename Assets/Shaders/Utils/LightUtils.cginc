@@ -77,6 +77,8 @@ float SoftShadow(float3 lightPos, float lightRadius, float penumbraRadius, float
     float shadowIntensity = 0.5;
 
     int shadowHits = 0;
+
+    [loop]
     for(int i = 0; i < shadowIterations; i++)
     {
         float3 tempLightPos = lightPos + penumbraRadius * ShittyRandom(float(i));

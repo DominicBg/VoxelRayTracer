@@ -2,6 +2,8 @@
 #pragma kernel CSMain
 
 RWTexture3D<uint> Result;
+#include "Utils/MathUtils.cginc"
+#include "Utils/NoiseUtils.cginc"
 
 float iTime;
 
@@ -10,26 +12,26 @@ float iTime;
 
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    if(id.y < 1)
+    float2 pos = id.xz ;
+
+    int waterLevel = 6;
+    float groundValue = waterLevel + 8 * fbm_4(pos * 0.03);
+
+    groundValue = max(groundValue, waterLevel);
+
+
+    if(id.y < groundValue)
     {
-        Result[id] = 1;
+        if(groundValue <= waterLevel)
+        {
+            Result[id] = 1;
+        }
+        else
+        {
+            Result[id] = 2;
+        }
         return;
     }
-
-    float sphereDist = 5;
-    float3 spherePos = float3(50, 25, 50) + float3(5 * sin(iTime * 1), 0, 5 * cos(iTime * 1));
-    if(distance(spherePos, id) < sphereDist)
-    {
-        Result[id] = 2;
-        return;
-    }
-
-    if(id.z == 50 && id.y < 15 + 4 * sin(iTime * 2 + id.x * 0.1))
-    {
-        Result[id] = 3;
-        return;
-    }
-
 
      Result[id] = 0;
 }

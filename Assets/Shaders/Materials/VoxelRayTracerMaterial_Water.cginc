@@ -1,5 +1,6 @@
 #include "VoxelRayTracerDatas.cginc"
 #include "Utils/LightUtils.cginc"
+#include "Utils/MathUtils.cginc"
 
 
 
@@ -49,10 +50,9 @@ Material GetColorMaterial_Water(in SceneData sceneData, inout RayHit hit)
 {
     Material material;
     material.reflection = 0.9;
-    material.blur = 0.0;
+    material.blur = 0.1;
 
     float3 col = float3(1,1,1);
-
 
     //material.color = CalcNormal(hit.pos, sceneData.time) * 0.5 + 0.5;
 
@@ -62,10 +62,10 @@ Material GetColorMaterial_Water(in SceneData sceneData, inout RayHit hit)
     //float dx = sin(sceneData.time + xz + h ) - sin(sceneData.time + xz - h) / (2 * h);
 
     //float wave = 0.1 * sin(sceneData.time + hit.pos.x + hit.pos.z);
-    
-    
-    hit.normal = GetNormal(hit.pos, sceneData.time);
-    hit.reflDir = reflect(hit.rd, hit.normal);
+    float3 randomPos = hit.pos + hit.normal + ShittyRandom(hit.pos * 5.5 + sceneData.time) * 0.5;
+    hit.normal = normalize(randomPos - hit.pos);
+    //hit.normal = GetNormal(hit.pos, sceneData.time);
+    //hit.reflDir = reflect(hit.rd, hit.normal);
     material.color = BasicLight(sceneData, hit);
     //material.color = BasicLight(sceneData, hit);
 

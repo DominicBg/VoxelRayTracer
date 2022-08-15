@@ -17,7 +17,6 @@ public class VoxelGenerator : MonoBehaviour
         kernelHandleTransparent = voxelGeneratorShaderTransparent.FindKernel("CSMain");
     }
 
-
     public virtual RenderTexture Generate(float t)
     {
         EnsureTexture(ref voxelTexture3D);

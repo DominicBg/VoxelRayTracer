@@ -1,6 +1,9 @@
 #ifndef _MathUtils
 #define _MathUtils
 
+#define TAU 6.283185
+#define PI 3.141592
+
 // All components are in the range [0…1], including hue.
 float3 rgb2hsv(float3 c)
 {
@@ -11,6 +14,11 @@ float3 rgb2hsv(float3 c)
     float d = q.x - min(q.w, q.y);
     float e = 1.0e-10;
     return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+}
+
+float3 GetColor(int r, int g, int b)
+{
+    return float3(r, g, b) / 255;
 }
 
 // All components are in the range [0…1], including hue.
@@ -57,12 +65,6 @@ float distancesq(float3 x, float3 y)
     return dot(diff, diff);
 }
 
-
-float easeInOutCubic(float x)
-{
-    return x < 0.5 ? 4. * x * x * x : 1. - pow(-2. * x + 2., 3.) / 2.;
-}
-	
 float saturate(float x)
 {
     return clamp(x, 0., 1.);
@@ -85,6 +87,61 @@ float Remap(float fromMin, float fromMax, float toMin, float toMax, float x)
 {
     float t = saturate(unlerp(x, fromMin, fromMax));
     return lerp(toMin, toMax, t);
+}
+
+float gain(float x, float k) 
+{
+    float a = 0.5*pow(2.0*((x<0.5)?x:1.0-x), k);
+    return (x<0.5)?a:1.0-a;
+}
+
+//Easings
+float easeInOutCubic(float x)
+{
+    return x < 0.5 ? 4. * x * x * x : 1. - pow(-2. * x + 2., 3.) / 2.;
+}
+
+
+float easeOutCirc(float x)
+{
+    return 1.0 - (1.0 - x) * (1.0 - x) * (1.0 - x) * (1.0 - x) * (1.0 - x);
+}
+
+float easeOutQuad(float x)
+{
+    return 1.0 - (1.0 - x) * (1.0 - x);
+}
+
+float easeOutCubic(float x)
+{
+    return 1.0 - (1.0 - x) * (1.0 - x) * (1.0 - x);
+}
+float easeInQuad(float x)
+{
+    return x * x;
+}
+
+float easeInCubic(float x)
+{
+    return x * x * x;
+}
+
+float Tri(float x)
+{
+    return 1. - abs(1. - 2. * x);
+}
+
+float Quantize(float x, float resolution)
+{
+    return floor(x * resolution) / resolution;
+}
+float2 Quantize(float2 x, float2 resolution)
+{
+    return floor(x * resolution) / resolution;
+}
+float3 Quantize(float3 x, float resolution)
+{
+    return floor(x * resolution) / resolution;
 }
 
 
@@ -123,6 +180,7 @@ float4 qInverse(float4 q)
 
 
 
+
 // RNG
 uint WangHash(uint n)
 {
@@ -140,6 +198,24 @@ uint WangHash(uint n)
     return n;
 }
 
+uint GenerateRngState(uint3 id)
+{
+    return WangHash(id.x * 532 + id.y * 1227 + id.z * 3523);
+}
+
+uint GenerateRngState(float3 id)
+{
+    return WangHash(id.x * 532 + id.y * 1227 + id.z * 3523);
+}
+
+uint GenerateRngState(float3 id, int seed)
+{
+    id += seed;
+    return WangHash(id.x * 532 * + id.y * 1227 + id.z * 3523);
+}
+
+
+
 uint NextState(uint state)
 {
     state ^= state << 13;
@@ -156,14 +232,14 @@ float NextFloat(float xmin, float xmax, inout uint state)
     return lerp(xmin, xmax, t);
 }
 
-float2 NextVec2(float2 rmin, float2 rmax, inout uint state)
+float2 Nextfloat2(float2 rmin, float2 rmax, inout uint state)
 {
     float x = NextFloat(rmin.x, rmax.x, state);
     float y = NextFloat(rmin.y, rmax.y, state);
     return float2(x, y);
 }
 
-float3 NextVec3(float3 rmin, float3 rmax, inout uint state)
+float3 Nextfloat3(float3 rmin, float3 rmax, inout uint state)
 {
     float x = NextFloat(rmin.x, rmax.x, state);
     float y = NextFloat(rmin.y, rmax.y, state);
@@ -171,4 +247,5 @@ float3 NextVec3(float3 rmin, float3 rmax, inout uint state)
     return float3(x, y, z);
 }
 
+///
 #endif

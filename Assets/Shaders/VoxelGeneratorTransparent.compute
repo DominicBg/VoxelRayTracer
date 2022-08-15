@@ -1,6 +1,8 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
+#include "Utils/MathUtils.cginc"
+
 RWTexture3D<uint> Result;
 
 float iTime;
@@ -10,14 +12,13 @@ float iTime;
 
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float sphereDist = 5;
-    float3 spherePos = float3(20, 25, 20) + float3(5 * sin(iTime * 1), 0, 5 * cos(iTime * 1));
-    if(distance(spherePos, id) < sphereDist)
-    {
-        Result[id] = 1;
-        return;
-    }
+    //La lluvia
+    uint x = id.x + iTime * 56.21;
+    uint y = id.y + iTime * 72.21;
+    uint z = id.z;
 
+    uint state = WangHash(x * 612 + y * 125 + z * 65);
+    float value = NextFloat(0, 1, state);
 
-     Result[id] = 0;
+    Result[id] = value > 0.99 ? 3 : 0;
 }

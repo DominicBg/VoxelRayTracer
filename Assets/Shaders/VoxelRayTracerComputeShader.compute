@@ -68,17 +68,33 @@ Material GetColor(inout RayHit hit)
         material.color = cubemap.SampleLevel(PointClampSampler, hit.rd, 1).rgb;
         return material;
     }
-
     return GetColor(hit.materialID, sceneData, hit);
 }
 
-float4 RayCastTransparent(float3 rayPos, float3 rayDir, float maxDist)
+float4 RayCastTransparent(float3 ro, float3 rd, float maxDist)
 {
-	int3 mapPos = int3(floor(rayPos + 0.));
-    float rayLength = length(rayDir);
-	float3 deltaDist = abs(float3(rayLength, rayLength, rayLength) / rayDir);
-	int3 rayStep = int3(sign(rayDir));
-	float3 sideDist = (sign(rayDir) * (float3(mapPos) - rayPos) + (sign(rayDir) * 0.5) + 0.5) * deltaDist; 
+    //Optim to start the ray at the voxel structure
+    //BoxIntersectionResult voxelMapIntersection = BoxIntersection(-sceneData.voxelSizes/2, sceneData.voxelSizes/2, ro, rd);
+    float skippedDist = 0;
+    if (any(ro < 0) || any(ro > sceneData.voxelSizes))
+    {
+        BoxIntersectionResult voxelMapIntersection = BoxIntersection(0, sceneData.voxelSizes, ro, rd);
+
+        if (!voxelMapIntersection.hasHit)
+        {
+            return 0;
+        }
+
+        float3 startPos = ro + rd * voxelMapIntersection.dist1 - rd * 0.1;
+        float skippedDist = distance(startPos, ro);
+        ro = startPos;
+    }
+
+	int3 mapPos = int3(floor(ro + 0.));
+    float rayLength = length(rd);
+	float3 deltaDist = abs(float3(rayLength, rayLength, rayLength) / rd);
+	int3 rayStep = int3(sign(rd));
+	float3 sideDist = (sign(rd) * (float3(mapPos) - ro) + (sign(rd) * 0.5) + 0.5) * deltaDist; 
     
     bool3 mask;
 	
@@ -89,11 +105,11 @@ float4 RayCastTransparent(float3 rayPos, float3 rayDir, float maxDist)
 	for (int i = 0; i < iMaxSteps; i++) 
     {
         //optimize this
-        if(distancesq(float3(mapPos), rayPos) > maxDist * maxDist) break;
+        if(distancesq(float3(mapPos), ro) > maxDist * maxDist) break;
         
 		if (voxelTransparent[mapPos] != 0)
         {
-            RayHit hit = CalculateRayHit(rayPos, rayDir, mapPos, mask, voxelTransparent);
+            RayHit hit = CalculateRayHit(ro, rd, mapPos, mask, skippedDist, voxelTransparent);
             float3 col = GetColor(hit).color;
             float boxDepth = abs(hit.dist - hit.dist2);
             sumColor += float4(col, 1.0) * boxDepth * transparency;          
@@ -176,7 +192,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
     //Center voxels at 0,0,0
-    ro += float3(iVoxelSizes.x, 0.0, iVoxelSizes.z) * 0.5;
+    //ro += float3(iVoxelSizes.x, 0.0, iVoxelSizes.z) * 0.5;
 
 	RayHit hit;
     if(iNormalDebugView)

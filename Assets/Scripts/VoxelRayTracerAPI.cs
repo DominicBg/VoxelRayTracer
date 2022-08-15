@@ -54,7 +54,8 @@ public class VoxelRayTracerAPI
         }
 
         shader.SetVector("iResolution", new Vector4(settings.resolution.x, settings.resolution.y, 1, 1));
-        shader.SetInt("iMaxSteps", settings.maxRaySteps);
+
+        //shader.SetInt("iMaxSteps", settings.maxRaySteps);
         shader.SetInt("iReflectionCount", settings.reflectionCount);
         shader.SetInt("iBlurIteration", settings.blurIteration);
         shader.SetInt("iShadowIteration", settings.shadowIteration);
@@ -109,7 +110,6 @@ public class VoxelRayTracerAPI
     {
         shader.SetFloat("iTime", t);
 
-
         //If I want to port this outside of unity lol
         shader.SetBool("iUseFreeCamera", useFreeCamera);
 
@@ -127,6 +127,8 @@ public class VoxelRayTracerAPI
             shader.SetMatrix("iCameraInverseProjection", mainCamera.projectionMatrix.inverse);
         }
 
+
+
         shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
         shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
 
@@ -136,6 +138,9 @@ public class VoxelRayTracerAPI
             shader.SetVector("iVoxelTransparentSizes", new Vector4(voxelTransparent3DSizes.x, voxelTransparent3DSizes.y, voxelTransparent3DSizes.z, 0));
         }
 
+        //We multiply by two because we have a buffer if some ray hits does perfeclty 2 steps by diagonals 
+        //https://medium.com/geekculture/dda-line-drawing-algorithm-be9f069921cf
+        shader.SetInt("iMaxSteps", (int)voxelTransparent3DSizes.magnitude * 2);
 
         shader.SetTexture(kernelHandle, "cubemap", cubemap);
 
@@ -168,7 +173,6 @@ public class VoxelRayTracerAPI
             reflectionCount = 5,
             blurIteration = 5,
             shadowIteration = 5,
-            maxRaySteps = 120,
             volumetricLightSteps = 450,
             resolution = new Vector2Int(1050, 100)
 
@@ -182,7 +186,6 @@ public class VoxelRayTracerAPI
             reflectionCount = 2,
             blurIteration = 1,
             shadowIteration = 1,
-            maxRaySteps = 120,
             volumetricLightSteps = 125,
             resolution = new Vector2Int(250, 250)
         };
@@ -206,7 +209,7 @@ public struct VoxelRayTracerSettings
     public int reflectionCount;
     public int blurIteration;
     public int shadowIteration;
-    public int maxRaySteps;
+    //public int maxRaySteps;
     public int volumetricLightSteps;
 
     public Vector2Int resolution;
