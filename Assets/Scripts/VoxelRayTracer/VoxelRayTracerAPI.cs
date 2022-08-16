@@ -111,14 +111,14 @@ public class VoxelRayTracerAPI
         for (int i = 0; i < lights.Count; i++)
         {
             var light = lights[i];
-            //light.position = centerAtZero ? CenterAtZero(light.position) : light.position;
+            light.position = centerAtZero ? CenterAtZero(light.position) : light.position;
             lightBuffer.Add(light);
         }
     }
 
     Vector3 CenterAtZero(Vector3 pos)
     {
-        //pos += new Vector3(voxel3DSizes.x, 0.0f, voxel3DSizes.z) * 0.5f;
+        pos += new Vector3(voxel3DSizes.x, 0.0f, voxel3DSizes.z) * 0.5f;
         return pos;
     }
 

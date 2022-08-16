@@ -130,11 +130,11 @@ float3 BasicLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
         case LIGHT_TYPE_POINT:
             float3 diffuse = DiffuseLight(lightData, hit);
             float3 spec = SpecularLight(lightData, hit);
-#ifdef HD
+//#ifdef HD
             float shadow = (sceneData.settings.shadowIterations > 1) ? SoftShadow(lightData, hit, sceneData) : HardShadow(lightData, hit, sceneData);
-#else
-            float shadow = HardShadow(lightData, hit, sceneData);
-#endif
+//#else
+//            float shadow = HardShadow(lightData, hit, sceneData);
+//#endif
 
             float fadeOff = FadeOffIntensity(lightData, hit);
             return (diffuse + spec) * shadow * fadeOff;
@@ -174,19 +174,20 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, LightData lightData, float
         
         float3 p = ro + rd * currentDist;
         float3 d = lightData.position - p;
-        float l = length(d);
+        float l2 = dot(d,d);
 
-        if (l > lightData.radius)
+        if (l2 > lightData.radius * lightData.radius)
         {
             continue;
         }
-        
+        float l = sqrt(l2);
+
+        //TODO do like soft shadow and raycast around the lightPos
         RayHit hit = RayCast(p, d / l, sceneData);
         if (!hit.hasHit || l < hit.dist)
         {
             //float vNoise = VolumetricNoise(p);
             //vNoise = Remap(0., 1., 0.5, 1., vNoise);
-            
             float fadeOff = FadeOffIntensity(lightData, p);
             lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * fadeOff;
             //todo try this shit *= exp(-cloud * dStep);

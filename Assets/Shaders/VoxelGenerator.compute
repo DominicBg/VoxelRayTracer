@@ -8,7 +8,6 @@ RWTexture3D<uint> Result;
 
 float iTime;
 
-
 [numthreads(8,8,8)]
 
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -18,7 +17,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //Lamp
     int lampHeight = 25;
     int3 center = 50;
-
     if(distance(id.xz, center.xz) < 3 && id.y < lampHeight)
     {   
         Result[id] = 3;
