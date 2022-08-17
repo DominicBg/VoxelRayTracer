@@ -4,6 +4,15 @@
 #define TAU 6.283185
 #define PI 3.141592
 
+bool DirectionToPitchYaw(float3 dir, out float pitch, out float yaw)
+{
+    pitch = asin(-dir.y);
+    yaw = atan2(dir.x, dir.z);
+    return true;
+    // pitch = asin(V.y / length(V));
+    // yaw = asin( V.x / (cos(pitch)*length(V)) ); //Beware cos(pitch)==0, catch this exception!
+}
+
 // All components are in the range [0…1], including hue.
 float3 rgb2hsv(float3 c)
 {
@@ -19,6 +28,16 @@ float3 rgb2hsv(float3 c)
 float3 GetColor(int r, int g, int b)
 {
     return float3(r, g, b) / 255;
+}
+
+float3 cos3(float3 v)
+{
+    return float3(cos(v.x), cos(v.y), cos(v.z));
+}
+
+float3 ColorPalette(float t, float3 a, float3 b, float3 c, float3 d)
+{
+    return a + b * cos3(TAU*(c*t + d));
 }
 
 // All components are in the range [0…1], including hue.
@@ -252,6 +271,7 @@ float3 NextRandomDirection(float3 direction, float spread, inout uint state)
   float z = NextFloat(0, (spread * PI), state);
   //float r = sqrt(1.0f - z * z);
   float r = sqrt(z);
+
   float theta = NextFloat(-PI, +PI, state);
   float x = r * cos(theta);
   float y = r * sin(theta);

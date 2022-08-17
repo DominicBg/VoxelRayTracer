@@ -74,7 +74,7 @@ float SoftShadow(float3 lightPos, float lightRadius, float penumbraRadius, float
     float lightDist = sqrt(lightDistsq);
     float3 ldir = diff / lightDist;
 
-    float shadowIntensity = 0.5;
+    float shadowIntensity = 1.;
 
     int shadowHits = 0;
 

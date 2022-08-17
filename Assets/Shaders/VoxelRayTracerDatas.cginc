@@ -37,7 +37,7 @@ struct Material
     float3 color;
     float reflection;
     float blur;
-
+    float skyboxLight;
     //todo add ior (index of refraction)
 };
 

@@ -8,14 +8,14 @@ Unity implementation for a Voxel Raytracer
 - Multiple light sources
 - Volumetric Light
 - Hard/Soft shadows
-- Skybox Support
+- Support Cubemap Skybox
+- Support procedural Skybox
 - Basic Material System with different shader
-- Blurry reflections
-- Single Light source
-
-# Missing Features
+- Blurry reflections (still needs more work)
 - Support material with different normal
 - Voxel Generation for Transparent Geometry
+- Support Video Extraction Render (require FFMPEG)
+
+# Missing Features
 - Support multiple blending for Transparent Geometry
-- Support Video Extraction Render
 - Refraction

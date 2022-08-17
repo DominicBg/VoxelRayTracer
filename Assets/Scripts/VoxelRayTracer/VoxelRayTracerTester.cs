@@ -11,13 +11,8 @@ public class VoxelRayTracerTester : MonoBehaviour
     public ComputeShader computeShader;
 
     public VoxelGenerator voxelGenerator;
-    public Image image;
-    public Canvas canvas;
     public Cubemap cubemap;
     public Camera mainCamera;
-    public float t;
-    public Material material;
-    public bool isAuto;
     public RenderDebugMode renderDebugMode;
     public bool useFreeCamera;
     public bool useOrthoCamera;

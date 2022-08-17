@@ -10,6 +10,7 @@ Material GetColorMaterial_Grass(in SceneData sceneData, inout RayHit hit)
     Material material;
     material.reflection = 0.0;
     material.blur = 0.0;
+    material.skyboxLight = 0.1;
 
     //bool isGrass = sceneData.voxel[hit.cell + int3(0, 1, 0)] == 0;
 

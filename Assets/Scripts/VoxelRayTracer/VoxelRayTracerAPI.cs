@@ -14,6 +14,7 @@ public class VoxelRayTracerAPI
     RenderTexture voxelTextureTransparent3D;
 
     Cubemap cubemap;
+    Cubemap fakeCubemap;
     Vector3Int voxel3DSizes;
     Vector3Int voxelTransparent3DSizes;
 
@@ -22,6 +23,7 @@ public class VoxelRayTracerAPI
     bool centerAtZero = true;
     bool useFreeCamera;
     bool isCameraOrtho;
+    bool useProceduralSkybox = true;
 
     //Free camera Mode
     Vector3 cameraPos;
@@ -39,8 +41,8 @@ public class VoxelRayTracerAPI
         kernelHandle = shader.FindKernel("CSMain");
 
         lightBuffer = new ListBuffer<LightData>("lightDatas", sizeof(LightData));
-        //cubemap = (Cubemap)RenderSettings.skybox.mainTexture;
-
+        fakeCubemap = new Cubemap(1, TextureFormat.Alpha8, false);
+        cubemap = fakeCubemap;
         SetMediumettings();
     }
 
@@ -103,6 +105,12 @@ public class VoxelRayTracerAPI
     public void SetCubeMap(Cubemap cubemap)
     {
         this.cubemap = cubemap;
+        useProceduralSkybox = false;
+    }
+    public void SetProceduralSkybox()
+    {
+        cubemap = fakeCubemap;
+        useProceduralSkybox = false;
     }
 
     public void SetLights(List<LightData> lights)
@@ -146,12 +154,12 @@ public class VoxelRayTracerAPI
             shader.SetMatrix("iCameraInverseProjection", mainCamera.projectionMatrix.inverse);
         }
 
+
         shader.SetVector("iResolution", new Vector4(settings.resolution.x, settings.resolution.y, 1, 1));
         shader.SetInt("iReflectionCount", settings.reflectionCount);
         shader.SetInt("iBlurIteration", settings.blurIteration);
         shader.SetInt("iShadowIteration", settings.shadowIteration);
         shader.SetInt("iVolumetricLightSteps", settings.volumetricLightSteps);
-
 
         shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
         shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
@@ -167,6 +175,8 @@ public class VoxelRayTracerAPI
         shader.SetInt("iMaxSteps", (int)voxelTransparent3DSizes.magnitude * 2);
 
         shader.SetTexture(kernelHandle, "cubemap", cubemap);
+        shader.SetBool("iUseProceduralSkyBox", useProceduralSkybox);
+     
 
         //Debugs
         shader.SetBool("iNormalDebugView", debugMode == RenderDebugMode.Normal);

@@ -29,6 +29,7 @@ Material GetColorMaterial_Water(in SceneData sceneData, inout RayHit hit)
 {
     Material material;
     material.reflection = 0.9;
+    material.skyboxLight = 0.2;
     material.blur = 0.01;
 
     float3 col = float3(1,1,1);

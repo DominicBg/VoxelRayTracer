@@ -1,9 +1,15 @@
 
+#ifndef _VoxelMaterialLink
+#define _VoxelMaterialLink
+
 #include "VoxelRayTracerDatas.cginc"
 #include "Materials/VoxelRayTracerMaterial_Water.cginc"
 #include "Materials/VoxelRayTracerMaterial_Grass.cginc"
 #include "Materials/VoxelRayTracerMaterial2.cginc"
 #include "Materials/VoxelRayTracerMaterial_Blocks.cginc"
+
+#include "Skybox/SimpleSkybox.cginc"
+
 
 Material GetColor(uint materialID, in SceneData sceneData, inout RayHit hit)
 {
@@ -12,12 +18,20 @@ Material GetColor(uint materialID, in SceneData sceneData, inout RayHit hit)
         case 1: return GetColorMaterial_Water(sceneData, hit);
         case 2: return GetColorMaterial_Grass(sceneData, hit);
         case 3: return GetColorMaterial_Blocks(sceneData, hit);
-        default:break;
+        default: break;
     }
 
     Material material;
     material.blur = 0;
     material.color = 0;
     material.reflection = 0;
+    material.skyboxLight = 0;
     return material;
 }
+
+float3 SampleSkybox(in SceneData sceneData, in RayHit hit)
+{
+    return SampleSimpleSkybox(hit.ro, hit.rd, sceneData.time);
+}
+
+#endif
