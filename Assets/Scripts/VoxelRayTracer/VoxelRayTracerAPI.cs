@@ -47,7 +47,7 @@ public class VoxelRayTracerAPI
 
     void EnsureComputeBuffer()
     {
-        if (outputTexture == null || (outputTexture.width != settings.resolution.x && outputTexture.height != settings.resolution.y))
+        if (outputTexture == null || (outputTexture.width != settings.resolution.x || outputTexture.height != settings.resolution.y))
         {
             outputTexture = new RenderTexture(settings.resolution.x, settings.resolution.y, 0);
             outputTexture.enableRandomWrite = true;

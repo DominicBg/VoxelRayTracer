@@ -1,12 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using static VoxelRayTracerAPI;
 
 public class VoxelRayTracerTester : MonoBehaviour
 {
+    public static VoxelRayTracerTester Instance { get; private set; }
+
     public ComputeShader computeShader;
+
     public VoxelGenerator voxelGenerator;
+    public Image image;
+    public Canvas canvas;
     public Cubemap cubemap;
     public Camera mainCamera;
     public float t;
@@ -28,9 +34,11 @@ public class VoxelRayTracerTester : MonoBehaviour
     public float exporterStartTime = 0;
     public float exporterEndTime = 1;
     public int exporterFPS = 30;
+    public VoxelRayTracerSettings exporterSettings;
 
     private void Start()
     {
+        Instance = this;
         Init();
     }
 
@@ -38,21 +46,10 @@ public class VoxelRayTracerTester : MonoBehaviour
     {
         api = new VoxelRayTracerAPI(computeShader);
         api.SetSettings(settings);
-
         lightDataComponents = FindObjectsOfType<LightDataComponent>();
     }
 
-    private void Update()
-    {
-        if (isAuto) t += Time.deltaTime;
-
-        var texture = RenderImage(t);
-        material.SetTexture("_MainTex", texture);
-    }
-
-    
-
-    RenderTexture RenderImage(float t)
+    public RenderTexture RenderImage(float t)
     {
         api.SetRenderDebugMode(renderDebugMode);
 
@@ -123,10 +120,18 @@ public class VoxelRayTracerTester : MonoBehaviour
     public void SavePicture()
     {
         Init();
+        api.SetSettings(exporterSettings);
 
         SaveTexture(RenderImage(0), settings.resolution, "0");
 
         api.Dispose();
+    }
+
+    void GetExportData(out float frameDuration, out int frameCount, out int frameNameMaxDigit)
+    {
+        frameDuration = 1f / exporterFPS;
+        frameCount = (int)((exporterEndTime - exporterStartTime) * exporterFPS);
+        frameNameMaxDigit = (int)Mathf.Log10(frameCount) + 1;
     }
 
     [ContextMenu("Export images")]
@@ -134,11 +139,9 @@ public class VoxelRayTracerTester : MonoBehaviour
     {
         Init();
 
-        float frameDuration = 1f / exporterFPS;
-        int frameCount = (int)((exporterEndTime - exporterStartTime) * exporterFPS);
-        int frameNameMaxDigit = (int)Mathf.Log10(frameCount) + 1;
+        api.SetSettings(exporterSettings);
 
-        //Debug.Log("number digit " + frameNameMaxDigit);
+        GetExportData(out float frameDuration, out int frameCount, out int frameNameMaxDigit);
 
         System.Text.StringBuilder strBuilder = new System.Text.StringBuilder();
 
@@ -149,15 +152,11 @@ public class VoxelRayTracerTester : MonoBehaviour
             int frameNameDigit = (int)Mathf.Max(Mathf.Log10(i), 0) + 1;
             int missingZeroes = frameNameMaxDigit - frameNameDigit;
 
-            //Debug.Log($"index {i} have {missingZeroes} missing zeroes");
             for (int j = 0; j < missingZeroes; j++)
             {
                 strBuilder.Append('0');
             }
             strBuilder.Append(i);
-
-            //Debug.Log($"index {i} name is {strBuilder}");
-
 
             float t = exporterStartTime + i * frameDuration;
             SaveTexture(RenderImage(t), settings.resolution, strBuilder.ToString());
@@ -174,19 +173,78 @@ public class VoxelRayTracerTester : MonoBehaviour
         tex.Apply();
         return tex;
     }
+
+
+    string GetExportPath()
+    {
+        return Application.dataPath + "/" + exportFolder;
+    }
     public void SaveTexture(RenderTexture renderTexture, Vector2Int resolution, string i)
     {
         byte[] bytes = ToTexture2D(renderTexture, resolution).EncodeToPNG();
-        string path = Application.dataPath + "/" + exportFolder;
+        string path = GetExportPath() + "/Screenshots";
 
         if(!System.IO.Directory.Exists(path))
         {
             System.IO.Directory.CreateDirectory(path);
         }
-        string filePath = path + "/SavedScreen_ " + i + ".png";
+        string filePath = path + "/img" + i + ".png";
         System.IO.File.WriteAllBytes(filePath, bytes);
         Debug.Log("Saved file at " + filePath);
-        //AssetDatabase.
+    }
+
+
+    [ContextMenu("Export images and Save video")]
+    public void ExportAndSaveVideo()
+    {
+        string ffmpegPath = GetExportPath() + "/ffmpeg.exe";
+        if (!System.IO.File.Exists(ffmpegPath))
+        {
+            Debug.LogError($"Unable to find ffmpeg at path {ffmpegPath}");
+            return;
+        }
+
+        ExportImages();
+        SaveVideo();
+    }
+
+    [ContextMenu("Save video")]
+    public void SaveVideo()
+    {
+        string ffmpegPath = GetExportPath() + "/ffmpeg.exe";
+        if (!System.IO.File.Exists(ffmpegPath))
+        {
+            Debug.LogError($"Unable to find ffmpeg at path {ffmpegPath}");
+            return;
+        }
+
+        GetExportData(out float _, out int _, out int frameNameMaxDigit);
+        string outputname = "Render";
+        string outputPath = $"{GetExportPath()}/{outputname}.mp4";
+        string args = $"-framerate  {exporterFPS} -i \"{GetExportPath()}/Screenshots/img%0{frameNameMaxDigit}d.png\" -q 1 \"{outputPath}\"";
+        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo(ffmpegPath, args);
+
+        startInfo.CreateNoWindow = true;
+        startInfo.UseShellExecute = false;
+        startInfo.RedirectStandardOutput = true;
+        startInfo.RedirectStandardError = true;
+
+        try
+        {
+            using (System.Diagnostics.Process process = System.Diagnostics.Process.Start(startInfo))
+            {
+                Debug.Log("Starting the process");
+
+                Debug.Log(process.StandardOutput.ReadToEnd());
+                Debug.LogError(process.StandardError.ReadToEnd());
+                process.WaitForExit();
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError(ex.Message);
+        }
+        Debug.Log($"Video rendered at {outputPath}");
     }
 #endif
 }

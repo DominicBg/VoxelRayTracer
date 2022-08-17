@@ -344,6 +344,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   computeShader: {fileID: 7200000, guid: bd9d6bbb5b2e63a45985ca361eee843d, type: 3}
   voxelGenerator: {fileID: 870940651}
+  image: {fileID: 0}
+  canvas: {fileID: 0}
   cubemap: {fileID: 8900000, guid: 1331a26d2843a1148a23d5ddc81629dc, type: 3}
   mainCamera: {fileID: 963194227}
   t: 0
@@ -355,10 +357,23 @@ MonoBehaviour:
   settings:
     reflectionCount: 3
     blurIteration: 0
-    shadowIteration: 1
+    shadowIteration: 3
     volumetricLightSteps: 0
     resolution: {x: 800, y: 600}
-  lightDataComponents: []
+  lightDataComponents:
+  - {fileID: 439087721}
+  - {fileID: 1463084688}
+  - {fileID: 1991350028}
+  exportFolder: Renders
+  exporterStartTime: 0
+  exporterEndTime: 10
+  exporterFPS: 30
+  exporterSettings:
+    reflectionCount: 5
+    blurIteration: 0
+    shadowIteration: 5
+    volumetricLightSteps: 255
+    resolution: {x: 960, y: 540}
 --- !u!4 &870940649
 Transform:
   m_ObjectHideFlags: 0
@@ -759,7 +774,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 1
+  m_UiScaleMode: 0
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
