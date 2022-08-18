@@ -101,7 +101,7 @@ float SoftShadow(in LightData lightData, in RayHit hit, in SceneData sceneData)
 
 float FadeOffIntensity(in LightData lightData, float3 position)
 {
-    float3 diff = distance(position, lightData.position);
+    float3 diff = position - lightData.position;
     float lightDistsq = dot(diff, diff);
 
     if (lightDistsq > lightData.radius * lightData.radius)
@@ -130,11 +130,11 @@ float3 BasicLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
         case LIGHT_TYPE_POINT:
             float3 diffuse = DiffuseLight(lightData, hit);
             float3 spec = SpecularLight(lightData, hit);
-//#ifdef HD
+            //#ifdef HD
             float shadow = (sceneData.settings.shadowIterations > 1) ? SoftShadow(lightData, hit, sceneData) : HardShadow(lightData, hit, sceneData);
-//#else
-//            float shadow = HardShadow(lightData, hit, sceneData);
-//#endif
+            //#else
+            //            float shadow = HardShadow(lightData, hit, sceneData);
+            //#endif
 
             float fadeOff = FadeOffIntensity(lightData, hit);
             return (diffuse + spec) * shadow * fadeOff;
@@ -157,39 +157,65 @@ float3 BasicLight(in SceneData sceneData, in RayHit hit)
 }
 
 
-
-float4 CalculateVolumetricLight(float3 ro, float3 rd, LightData lightData, float maxDist, in SceneData sceneData)
+SamplerState sampler_Trilinear_Repeat;
+float SampleVolumetricNoise(float3 p, Texture3D<float> volumetricNoise)
 {
+    //Simple fbm sampling
+    float f;
+    f  = 0.5000 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
+    f += 0.2500 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
+    f += 0.0800 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
+    f += 0.0625 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
+    f += 0.1250 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
+    
+    return f;
+}
+
+float4 CalculateVolumetricLight(float3 ro, float3 rd, in LightData lightData, float maxDist, in SceneData sceneData)
+{
+    float startDist, endDist;
+    if(!RaySphereIntersection(ro, rd, lightData.position, lightData.radius, startDist, endDist))
+    {
+        //The ray doesn't intersect with the light radius, just skip
+        return 0;
+    }
+
+    //Will be 0 if the ray starts inside
+    startDist = max(startDist, 0);
+
     int steps = sceneData.settings.volumetricLightSteps;
     float dx = lightData.radius / float(steps);
     
     float vIntensity = lightData.volumetricIntensity;
     float4 lightSum = 0.;
-    
+
     [loop]
     for (int i = 0; i < steps; i++)
     {
-        float currentDist = float(i) * dx;
-        if (currentDist > maxDist) break;
+        float currentDist = startDist + float(i) * dx;
+            
+        if (currentDist > maxDist || currentDist > endDist) break;
+        //if (currentDist > maxDist) break;
         
         float3 p = ro + rd * currentDist;
-        float3 d = lightData.position - p;
-        float l2 = dot(d,d);
+        p += lightData.penumbraRadius * ShittyRandom(float(i));
 
-        if (l2 > lightData.radius * lightData.radius)
+        float3 d = lightData.position - p;
+        float lightToPosRadiusSq = dot(d, d);
+
+        if (lightToPosRadiusSq > lightData.radius * lightData.radius)
         {
             continue;
         }
-        float l = sqrt(l2);
+        float l = sqrt(lightToPosRadiusSq);
 
         //TODO do like soft shadow and raycast around the lightPos
         RayHit hit = RayCast(p, d / l, sceneData);
         if (!hit.hasHit || l < hit.dist)
         {
-            //float vNoise = VolumetricNoise(p);
-            //vNoise = Remap(0., 1., 0.5, 1., vNoise);
-            float fadeOff = FadeOffIntensity(lightData, p);
-            lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * fadeOff;
+            float vNoise = SampleVolumetricNoise(p * 0.05 + sceneData.time * 0.05, sceneData.volumetricNoise);
+            //float fadeOff = FadeOffIntensity(lightData, p);
+            lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * vNoise;
             //todo try this shit *= exp(-cloud * dStep);
 
         }

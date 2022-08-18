@@ -15,6 +15,7 @@
 SamplerState PointClampSampler;
 Texture3D<uint> voxel;
 Texture3D<uint> voxelTransparent;
+Texture3D<float> volumetricNoise;
 
 TextureCube<float4> cubemap;
 RWTexture2D<float4> Result;
@@ -23,8 +24,7 @@ StructuredBuffer<LightData> lightDatas;
 #define MAXREFLECTIONCOUNT 10
 #define HD
 
-//Inputs
-
+////Inputs
 
 //Cams
 bool iUseFreeCamera;
@@ -49,6 +49,7 @@ float3 iVoxelSizes;
 float3 iVoxelTransparentSizes;
 
 bool iUseProceduralSkyBox; //if false, it will sample the the cubemax skybox
+bool iUseVolumetricNoise;
 
 //Debug
 bool iNormalDebugView;
@@ -157,7 +158,7 @@ void RenderRay(float3 ro, float3 rd, out Material material, out float obstructio
 
     material = GetColor(hit);
 
-
+    //Skybox illuminations
     if (material.skyboxLight > 0)
     {
         material.color = lerp(material.color, GetSkyboxColor(hit), material.skyboxLight);
@@ -215,6 +216,7 @@ void PrepareSceneData()
     sceneData.voxel = voxel;
     sceneData.time = iTime;
     sceneData.voxelSizes = iVoxelSizes;
+    sceneData.volumetricNoise = volumetricNoise;
 }
 
 [numthreads(8, 8, 1)]
@@ -240,9 +242,6 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     {
         CreateCameraRay(uv, iCameraToWorld, iCameraInverseProjection, ro, rd);
     }
-
-    //Center voxels at 0,0,0
-    //ro += float3(iVoxelSizes.x, 0.0, iVoxelSizes.z) * 0.5;
 
     RayHit hit;
     if (iNormalDebugView)

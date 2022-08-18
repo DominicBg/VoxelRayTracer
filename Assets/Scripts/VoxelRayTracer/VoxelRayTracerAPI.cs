@@ -12,6 +12,7 @@ public class VoxelRayTracerAPI
 
     RenderTexture voxelTexture3D;
     RenderTexture voxelTextureTransparent3D;
+    RenderTexture volumetricNoise;
 
     Cubemap cubemap;
     Cubemap fakeCubemap;
@@ -24,6 +25,7 @@ public class VoxelRayTracerAPI
     bool useFreeCamera;
     bool isCameraOrtho;
     bool useProceduralSkybox = true;
+    bool useVolumetricNoise;
 
     //Free camera Mode
     Vector3 cameraPos;
@@ -42,6 +44,10 @@ public class VoxelRayTracerAPI
 
         lightBuffer = new ListBuffer<LightData>("lightDatas", sizeof(LightData));
         fakeCubemap = new Cubemap(1, TextureFormat.Alpha8, false);
+ 
+        //volumetricNoise = new RenderTexture(1, 1, 0);
+        //volumetricNoise.Create();
+
         cubemap = fakeCubemap;
         SetMediumettings();
     }
@@ -96,10 +102,18 @@ public class VoxelRayTracerAPI
         voxel3DSizes = new Vector3Int(voxelTexture3D.width, voxelTexture3D.height, voxelTexture3D.volumeDepth);
     }
 
+
     public void SetTransparentVoxelGeometry(RenderTexture voxelTextureTransparent3D)
     {
         this.voxelTextureTransparent3D = voxelTextureTransparent3D;
         voxelTransparent3DSizes = new Vector3Int(voxelTextureTransparent3D.width, voxelTextureTransparent3D.height, voxelTextureTransparent3D.volumeDepth);
+    }
+
+    public void SetVolumetricNoise(RenderTexture volumetricNoise)
+    {
+        this.volumetricNoise = volumetricNoise;
+        useVolumetricNoise = true;
+       //voxel3DSizes = new Vector3Int(voxelTexture3D.width, voxelTexture3D.height, voxelTexture3D.volumeDepth);
     }
 
     public void SetCubeMap(Cubemap cubemap)
@@ -161,22 +175,30 @@ public class VoxelRayTracerAPI
         shader.SetInt("iShadowIteration", settings.shadowIteration);
         shader.SetInt("iVolumetricLightSteps", settings.volumetricLightSteps);
 
+        //Voxel opaque geometry
         shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
         shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
 
+        //Voxel transparent geometry
         if(voxelTextureTransparent3D != null)
         {
             shader.SetTexture(kernelHandle, "voxelTransparent", voxelTextureTransparent3D);
             shader.SetVector("iVoxelTransparentSizes", new Vector4(voxelTransparent3DSizes.x, voxelTransparent3DSizes.y, voxelTransparent3DSizes.z, 0));
         }
 
+        //Volumetric Noise
+        shader.SetTexture(kernelHandle, "volumetricNoise", volumetricNoise);
+        shader.SetBool("iUseVolumetricNoise", useVolumetricNoise);
+
+
         //We multiply by two because we have a buffer if some ray hits does perfeclty 2 steps by diagonals 
         //https://medium.com/geekculture/dda-line-drawing-algorithm-be9f069921cf
         shader.SetInt("iMaxSteps", (int)voxelTransparent3DSizes.magnitude * 2);
 
+        //Skyboxes
         shader.SetTexture(kernelHandle, "cubemap", cubemap);
         shader.SetBool("iUseProceduralSkyBox", useProceduralSkybox);
-     
+
 
         //Debugs
         shader.SetBool("iNormalDebugView", debugMode == RenderDebugMode.Normal);

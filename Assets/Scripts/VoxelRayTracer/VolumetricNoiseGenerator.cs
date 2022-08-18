@@ -1,9 +1,8 @@
 using UnityEngine;
 
-public class VoxelGenerator : RenderTexture3DGenerator
+public class VolumetricNoiseGenerator : RenderTexture3DGenerator
 {
-    protected override RenderTextureFormat TextureType() => RenderTextureFormat.RInt;
-
+    protected override RenderTextureFormat TextureType() => RenderTextureFormat.RFloat;
     float t;
 
     public RenderTexture GenerateWithParameters(float time)
@@ -17,4 +16,5 @@ public class VoxelGenerator : RenderTexture3DGenerator
         base.AddShaderParameters(computeShader);
         computeShader.SetFloat("iTime", t);
     }
+
 }

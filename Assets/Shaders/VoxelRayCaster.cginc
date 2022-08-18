@@ -75,7 +75,7 @@ RayHit CalculateRayHit(float3 ro, float3 rd, int3 mapPos, bool3 mask, float skip
     hit.normal = normal;
     hit.reflDir = reflect(rd, normal);
     hit.cell = mapPos;
-    hit.uv = frac(GetUV(hit)); //validate uv
+    hit.uv = frac(GetUV(hit));
     hit.materialID = voxel[mapPos];
     return hit;
 }

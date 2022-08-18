@@ -281,5 +281,30 @@ float3 NextRandomDirection(float3 direction, float spread, inout uint state)
 }
  
 
+bool RaySphereIntersection(float3 ro, float3 rd, float3 spherePos, float sphereRadius, out float t1, out float t2)
+{
+    t1 = 0;
+    t2 = 0;
+
+	//solve for tc
+	float3 l = spherePos - ro;
+	float tc = dot(l, rd);
+	
+	if (tc < 0.0) return false;
+	float d2 = (tc*tc) - dot(l, l);
+	
+	float radius2 = sphereRadius * sphereRadius;
+	if (d2 > radius2) return false;
+
+	//solve for t1c
+	float t1c = sqrt(radius2 - d2);
+
+	//solve for intersection points
+	t1 = tc - t1c;
+	t2 = tc + t1c;
+	
+	return true;
+}
+
 ///
 #endif

@@ -53,6 +53,7 @@ struct SceneData
 {
     Texture3D<uint> voxel;
     Texture3D<uint> voxelTransparent;
+    Texture3D<float> volumetricNoise;
     StructuredBuffer<LightData> lightDatas;
     Settings settings;
     float time;

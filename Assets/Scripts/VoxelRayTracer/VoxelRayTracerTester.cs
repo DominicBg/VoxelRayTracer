@@ -8,9 +8,12 @@ public class VoxelRayTracerTester : MonoBehaviour
 {
     public static VoxelRayTracerTester Instance { get; private set; }
 
-    public ComputeShader computeShader;
+    public ComputeShader voxelRaytracerShader;
 
     public VoxelGenerator voxelGenerator;
+    public VoxelGenerator voxelTransparentGenerator;
+    public VolumetricNoiseGenerator volumetricNoiseGenerator;
+
     public Cubemap cubemap;
     public Camera mainCamera;
     public RenderDebugMode renderDebugMode;
@@ -39,7 +42,7 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     public void Init()
     {
-        api = new VoxelRayTracerAPI(computeShader);
+        api = new VoxelRayTracerAPI(voxelRaytracerShader);
         api.SetSettings(settings);
         lightDataComponents = FindObjectsOfType<LightDataComponent>();
     }
@@ -71,14 +74,21 @@ public class VoxelRayTracerTester : MonoBehaviour
 
 
         //Create geometry
-        var voxel = voxelGenerator.Generate(t);
+        var voxel = voxelGenerator.GenerateWithParameters(t);
         api.SetOpaqueVoxelGeometry(voxel);
 
-        if (voxelGenerator.voxelGeneratorShaderTransparent != null)
+        
+        var voxelTr = voxelTransparentGenerator.GenerateWithParameters(t);
+        api.SetTransparentVoxelGeometry(voxelTr);
+        
+
+        //Generate Volumetric Noise
+        if (volumetricNoiseGenerator != null)
         {
-            var voxelTr = voxelGenerator.GenerateTransparent(t);
-            api.SetTransparentVoxelGeometry(voxelTr);
+            var volumetricNoise = volumetricNoiseGenerator.GenerateWithParameters(t);
+            api.SetVolumetricNoise(volumetricNoise);
         }
+
 
         //Add cubemap
         if (cubemap != null)
