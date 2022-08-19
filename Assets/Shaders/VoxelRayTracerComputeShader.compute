@@ -7,12 +7,11 @@
 #include "VoxelRayTracerDatas.cginc"
 #include "VoxelMaterialLink.cginc"
 #include "VoxelRayCaster.cginc"
-#include "GPUCamera.cginc"
 
 #include "Utils/MathUtils.cginc"
 #include "Utils/NoiseUtils.cginc"
+#include "Utils/CameraUtils.cginc"
 
-SamplerState PointClampSampler;
 Texture3D<uint> voxel;
 Texture3D<uint> voxelTransparent;
 Texture3D<float> volumetricNoise;
@@ -62,6 +61,8 @@ bool iBlurDebugView;
 SceneData sceneData;
 Settings settings;
 
+
+SamplerState PointClampSampler;
 float3 GetSkyboxColor(in RayHit hit)
 {
     if (iUseProceduralSkyBox)
@@ -167,6 +168,12 @@ void RenderRay(float3 ro, float3 rd, out Material material, out float obstructio
     float maxDist = hit.hasHit ? hit.dist : 9999;
     obstruction = 0;
 
+    //todo implement fog
+    //float3 fogCol = float3(0.5,0.6,0.7);
+    //float3 fogDensity = CalculateFogDensity(hit, 1, 2.5);
+    //material.color = CalculateFogColor(material.color, fogCol, fogDensity);
+
+    //With transparency but its ugly lol
     // #ifdef HD
     //     float4 transparentColor = RayCastTransparent(ro, rd, maxDist);
     //     float4 volumetricLight = CalculateVolumetricLight(ro, rd, maxDist, sceneData);
@@ -178,30 +185,7 @@ void RenderRay(float3 ro, float3 rd, out Material material, out float obstructio
         float4 volumetricLight = CalculateVolumetricLight(ro, rd, maxDist, sceneData);
         material.color = Blend(material.color, volumetricLight);
         obstruction = volumetricLight.a;
-    #endif
-}
-
-void PerspectiveCam(float3 camPos, float4 camRot, float2 uv, float fov, out float3 ro, out float3 rd)
-{
-    float imageAspectRatio = iResolution.x / iResolution.y;  //assuming width > height
-    uv.x = uv.x * tan(fov / 2 * PI / 180) * imageAspectRatio;
-    uv.y = uv.y * tan(fov / 2 * PI / 180);
-
-    //Add FOV
-    float3 forward = normalize(float3(uv.x, uv.y, 1.0));
-    ro = camPos;
-    rd = qmul(camRot, forward);
-}
-void OrthographicCam(float3 camPos, float4 camRot, float2 uv, float size, out float3 ro, out float3 rd)
-{
-    float imageAspectRatio = iResolution.x / iResolution.y;  //assuming width > height
-    uv.x = uv.x * imageAspectRatio;
-    uv.y = uv.y;
-
-    //Add FOV
-    //float3 forward = normalize(float3(uv.x, uv.y, 1.0));
-    ro = camPos + (uv.x * qmul(camRot, float3(1, 0, 0)) * size) + (uv.y * qmul(camRot, float3(0, 1, 0)) * size);
-    rd = qmul(camRot, float3(0, 0, 1));
+    #endif    
 }
 
 void PrepareSceneData()
@@ -229,13 +213,14 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     if (iUseFreeCamera)
     {
+        float aspectRatio = CalculateAspectRatio(iResolution);
         if (iCameraIsOrtho)
         {
-            OrthographicCam(iCameraPos, iCameraRot, uv, iCameraFOV, ro, rd);
+            OrthographicCam(iCameraPos, iCameraRot, uv, iCameraFOV, aspectRatio, ro, rd);
         }
         else
         {
-            PerspectiveCam(iCameraPos, iCameraRot, uv, iCameraFOV, ro, rd);
+            PerspectiveCam(iCameraPos, iCameraRot, uv, iCameraFOV, aspectRatio, ro, rd);
         }
     }
     else

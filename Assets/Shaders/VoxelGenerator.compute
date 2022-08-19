@@ -12,38 +12,51 @@ float iTime;
 
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float2 pos = id.xz ;
+    float3 pos = id;
+    //pos.xz += iTime * 15;
+    //pos = pos % 128;
+
+    int3 center = 128/2;
+
+    float box = sdBoxFrame(id - float3(center.x, 128/2, center.z), 128/2, 1);
+    if(box < 0)
+    {
+        Result[id] = 3;
+        return;
+    }
+
+    //float2 pos = id.xz;
 
     //Lamp
-    uint lampHeight = 22;
-    int3 center = 50;
+    uint lampHeight = 52;
+    //int3 center = 50;
 
-    float lampPole = distance(id.xz, center.xz);
+    float lampPole = distance(pos.xz, center.xz);
     if(lampPole < 5 && id.y < lampHeight)
     {   
         Result[id] = 3;
         return;
     }
 
-    float lampHead = sdBoxFrame(id - float3(center.x, 25, center.z), 5, 1);
+    float lampHead = sdBoxFrame(pos - float3(center.x, 55, center.z), 5, 1);
     if(lampHead < 0)
     {
         Result[id] = 3;
         return;
     }
 
-    float lampCap = sdCone(id - float3(center.x, 35, center.z), 15, 7);
-    float lampCapInner = sdCone(id - float3(center.x, 33, center.z), 15, 7);
+    float lampCap = sdCone(pos - float3(center.x, 65, center.z), 15, 7);
+    float lampCapInner = sdCone(pos - float3(center.x, 63, center.z), 15, 7);
     if(opSubtraction(lampCapInner, lampCap) < 0)
     {
         Result[id] = 3;
         return;
     }
 
-    uint waterLevel = 6;
-    float groundValue = waterLevel + 8 * fbm_4(pos * 0.03);
+    uint waterLevel = 36;
+    float groundValue = waterLevel + 8 * fbm_4(pos.xz * 0.03);
     groundValue = max(groundValue, waterLevel);
-    if(id.y < groundValue)
+    if(pos.y < groundValue)
     {
         if(groundValue <= waterLevel)
         {

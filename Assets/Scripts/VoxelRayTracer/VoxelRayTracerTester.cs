@@ -8,8 +8,14 @@ public class VoxelRayTracerTester : MonoBehaviour
 {
     public static VoxelRayTracerTester Instance { get; private set; }
 
-    public ComputeShader voxelRaytracerShader;
+    [Header("Fixed")]
+    public ComputeShader fixedVoxellRayTracerShader;
 
+    [Header("Progressive")]
+    public ComputeShader progressiveCameraRayCalculator;
+    public ComputeShader progressiveSingleRayCaster;
+
+    [Header("Voxel")]
     public VoxelGenerator voxelGenerator;
     public VoxelGenerator voxelTransparentGenerator;
     public VolumetricNoiseGenerator volumetricNoiseGenerator;
@@ -19,6 +25,8 @@ public class VoxelRayTracerTester : MonoBehaviour
     public RenderDebugMode renderDebugMode;
     public bool useFreeCamera;
     public bool useOrthoCamera;
+
+    public bool useProgressiveRenderer;
 
     public VoxelRayTracerSettings settings;
 
@@ -42,7 +50,14 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     public void Init()
     {
-        api = new VoxelRayTracerAPI(voxelRaytracerShader);
+        if (useProgressiveRenderer)
+        {
+            api = new ProgressiveVoxelRayTracerAPI(progressiveCameraRayCalculator, progressiveSingleRayCaster);
+        }
+        else
+        {
+            api = new FixedVoxelRayTracerAPI(fixedVoxellRayTracerShader);
+        }
         api.SetSettings(settings);
         lightDataComponents = FindObjectsOfType<LightDataComponent>();
     }
@@ -77,10 +92,10 @@ public class VoxelRayTracerTester : MonoBehaviour
         var voxel = voxelGenerator.GenerateWithParameters(t);
         api.SetOpaqueVoxelGeometry(voxel);
 
-        
+
         var voxelTr = voxelTransparentGenerator.GenerateWithParameters(t);
         api.SetTransparentVoxelGeometry(voxelTr);
-        
+
 
         //Generate Volumetric Noise
         if (volumetricNoiseGenerator != null)
@@ -166,7 +181,7 @@ public class VoxelRayTracerTester : MonoBehaviour
             float t = exporterStartTime + i * frameDuration;
             SaveTexture(RenderImage(t), settings.resolution, strBuilder.ToString());
         }
-       
+
         api.Dispose();
     }
 
@@ -189,7 +204,7 @@ public class VoxelRayTracerTester : MonoBehaviour
         byte[] bytes = ToTexture2D(renderTexture, resolution).EncodeToPNG();
         string path = GetExportPath() + "/Screenshots";
 
-        if(!System.IO.Directory.Exists(path))
+        if (!System.IO.Directory.Exists(path))
         {
             System.IO.Directory.CreateDirectory(path);
         }

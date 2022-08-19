@@ -362,10 +362,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   computeShader: {fileID: 7200000, guid: acde0456731096f4999e9a9b44061d31, type: 3}
-  resolution: {x: 100, y: 100, z: 100}
+  resolution: {x: 128, y: 128, z: 128}
   computeShaderThreadGroup: {x: 8, y: 8, z: 8}
   kernelName: CSMain
-  renderTexture3D: {fileID: 0}
 --- !u!1 &870940647
 GameObject:
   m_ObjectHideFlags: 0
@@ -395,7 +394,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a196a3416791a94f88210a72c178f89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  voxelRaytracerShader: {fileID: 7200000, guid: bd9d6bbb5b2e63a45985ca361eee843d, type: 3}
+  fixedVoxellRayTracerShader: {fileID: 7200000, guid: bd9d6bbb5b2e63a45985ca361eee843d, type: 3}
+  progressiveCameraRayCalculator: {fileID: 7200000, guid: cd474e903d363ad45b4fd92e9b834fbe, type: 3}
+  progressiveSingleRayCaster: {fileID: 7200000, guid: 3bb172e904a392f498077bab14298eb3, type: 3}
   voxelGenerator: {fileID: 1141573245}
   voxelTransparentGenerator: {fileID: 714045225}
   volumetricNoiseGenerator: {fileID: 1488325159}
@@ -404,15 +405,16 @@ MonoBehaviour:
   renderDebugMode: 0
   useFreeCamera: 1
   useOrthoCamera: 0
+  useProgressiveRenderer: 1
   settings:
     reflectionCount: 3
     blurIteration: 0
-    shadowIteration: 3
+    shadowIteration: 5
     volumetricLightSteps: 0
     resolution: {x: 800, y: 600}
   lightDataComponents:
   - {fileID: 439087721}
-  - {fileID: 1463084688}
+  - {fileID: 1876802379}
   - {fileID: 1991350028}
   exportFolder: Renders
   exporterStartTime: 0
@@ -422,8 +424,8 @@ MonoBehaviour:
     reflectionCount: 5
     blurIteration: 0
     shadowIteration: 5
-    volumetricLightSteps: 255
-    resolution: {x: 960, y: 540}
+    volumetricLightSteps: 2000
+    resolution: {x: 1920, y: 1080}
 --- !u!4 &870940649
 Transform:
   m_ObjectHideFlags: 0
@@ -520,14 +522,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.1847422, y: 0.5086596, z: -0.11276711, w: 0.8333183}
-  m_LocalPosition: {x: -50, y: 39.85, z: -25}
+  m_LocalRotation: {x: 0.100589454, y: 0.4966158, z: -0.05807535, w: 0.8601638}
+  m_LocalPosition: {x: -56.96, y: 65.7, z: -42.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 25, y: 62.8, z: 0}
+  m_LocalEulerAnglesHint: {x: 13.34, y: 60, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -617,10 +619,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   computeShader: {fileID: 7200000, guid: 17e47d6b9adfa924989f53046aa52ae1, type: 3}
-  resolution: {x: 100, y: 100, z: 100}
+  resolution: {x: 128, y: 128, z: 128}
   computeShaderThreadGroup: {x: 8, y: 8, z: 8}
   kernelName: CSMain
-  renderTexture3D: {fileID: 0}
 --- !u!4 &1141573246
 Transform:
   m_ObjectHideFlags: 0
@@ -719,7 +720,6 @@ MonoBehaviour:
   resolution: {x: 32, y: 32, z: 32}
   computeShaderThreadGroup: {x: 8, y: 8, z: 8}
   kernelName: CSMain
-  renderTexture3D: {fileID: 0}
 --- !u!4 &1488325160
 Transform:
   m_ObjectHideFlags: 0
@@ -766,10 +766,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lightType: 1
   color: {r: 1, g: 0.9352594, b: 0.82452834, a: 1}
-  intensity: 0.5
+  intensity: 1
   radius: 100
   penumbraRadius: 0.5
-  volumetricIntensity: 0.06
+  volumetricIntensity: 0.03
 --- !u!4 &1876802380
 Transform:
   m_ObjectHideFlags: 0
@@ -778,7 +778,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1876802378}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 31.61, z: 0}
+  m_LocalPosition: {x: 0, y: 60.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -816,7 +816,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lightType: 0
   color: {r: 1, g: 0.9655885, b: 0.7773585, a: 1}
-  intensity: 0
+  intensity: 0.2
   radius: 25
   penumbraRadius: 1
   volumetricIntensity: 0

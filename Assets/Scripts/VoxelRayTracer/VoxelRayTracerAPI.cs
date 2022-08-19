@@ -1,46 +1,45 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VoxelRayTracerAPI
+public abstract class VoxelRayTracerAPI
 {
     public enum RenderDebugMode { None, Normal, ReflectedDirection, UV, Light, Blur }
 
-    VoxelRayTracerSettings settings;
-    ComputeShader shader;
-    ListBuffer<LightData> lightBuffer;
-    RenderTexture outputTexture;
+    protected RenderTexture outputTexture;
 
-    RenderTexture voxelTexture3D;
-    RenderTexture voxelTextureTransparent3D;
-    RenderTexture volumetricNoise;
+    protected VoxelRayTracerSettings settings;
+    //protected ComputeShader shader;
+    protected ListBuffer<LightData> lightBuffer;
 
-    Cubemap cubemap;
-    Cubemap fakeCubemap;
-    Vector3Int voxel3DSizes;
-    Vector3Int voxelTransparent3DSizes;
+    protected RenderTexture voxelTexture3D;
+    protected RenderTexture voxelTextureTransparent3D;
+    protected RenderTexture volumetricNoise;
 
-    int kernelHandle;
+    protected Cubemap cubemap;
+    protected Cubemap fakeCubemap;
+    protected Vector3Int voxel3DSizes;
+    protected Vector3Int voxelTransparent3DSizes;
 
-    bool centerAtZero = true;
-    bool useFreeCamera;
-    bool isCameraOrtho;
-    bool useProceduralSkybox = true;
-    bool useVolumetricNoise;
+    protected bool centerAtZero = true;
+    protected bool useFreeCamera;
+    protected bool isCameraOrtho;
+    protected bool useProceduralSkybox = true;
+    protected bool useVolumetricNoise;
 
     //Free camera Mode
-    Vector3 cameraPos;
-    Quaternion cameraRot;
-    float fov = 60;
+    protected Vector3 cameraPos;
+    protected Quaternion cameraRot;
+    protected float fov = 60;
 
     //Unity camera Mode
-    Camera mainCamera;
+    protected Camera mainCamera;
 
-    RenderDebugMode debugMode;
+    protected RenderDebugMode debugMode;
 
-    public unsafe VoxelRayTracerAPI(ComputeShader computeShader)
+    public unsafe VoxelRayTracerAPI()
     {
-        shader = computeShader;
-        kernelHandle = shader.FindKernel("CSMain");
+       // shader = computeShader;
+        //kernelHandle = shader.FindKernel("CSMain");
 
         lightBuffer = new ListBuffer<LightData>("lightDatas", sizeof(LightData));
         fakeCubemap = new Cubemap(1, TextureFormat.Alpha8, false);
@@ -62,7 +61,7 @@ public class VoxelRayTracerAPI
             outputTexture.Create();
         }
     
-        shader.SetTexture(kernelHandle, "Result", outputTexture);
+        //shader.SetTexture(kernelHandle, "Result", outputTexture);
     }
 
 
@@ -138,84 +137,14 @@ public class VoxelRayTracerAPI
         }
     }
 
-    Vector3 CenterAtZero(Vector3 pos)
+    protected Vector3 CenterAtZero(Vector3 pos)
     {
         pos += new Vector3(voxel3DSizes.x, 0.0f, voxel3DSizes.z) * 0.5f;
         return pos;
     }
 
-    public RenderTexture RenderToTexture(float t)
-    {
-        shader.SetFloat("iTime", t);
+    public abstract RenderTexture RenderToTexture(float t);
 
-        //If I want to port this outside of unity lol
-        shader.SetBool("iUseFreeCamera", useFreeCamera);
-        shader.SetBool("iCameraIsOrtho", isCameraOrtho);
-
-        Vector3 alignedCameraPos = centerAtZero ? CenterAtZero(cameraPos) : cameraPos;
-
-        //Free Cam
-        if (useFreeCamera)
-        {
-            shader.SetVector("iCameraPos", alignedCameraPos);
-            shader.SetVector("iCameraRot", new Vector4(cameraRot.x, cameraRot.y, cameraRot.z, cameraRot.w));
-            shader.SetFloat("iCameraFOV", fov);
-        }
-        else
-        {
-            //Unity Cam
-            shader.SetMatrix("iCameraToWorld", mainCamera.cameraToWorldMatrix);
-            shader.SetMatrix("iCameraInverseProjection", mainCamera.projectionMatrix.inverse);
-        }
-
-
-        shader.SetVector("iResolution", new Vector4(settings.resolution.x, settings.resolution.y, 1, 1));
-        shader.SetInt("iReflectionCount", settings.reflectionCount);
-        shader.SetInt("iBlurIteration", settings.blurIteration);
-        shader.SetInt("iShadowIteration", settings.shadowIteration);
-        shader.SetInt("iVolumetricLightSteps", settings.volumetricLightSteps);
-
-        //Voxel opaque geometry
-        shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
-        shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
-
-        //Voxel transparent geometry
-        if(voxelTextureTransparent3D != null)
-        {
-            shader.SetTexture(kernelHandle, "voxelTransparent", voxelTextureTransparent3D);
-            shader.SetVector("iVoxelTransparentSizes", new Vector4(voxelTransparent3DSizes.x, voxelTransparent3DSizes.y, voxelTransparent3DSizes.z, 0));
-        }
-
-        //Volumetric Noise
-        shader.SetTexture(kernelHandle, "volumetricNoise", volumetricNoise);
-        shader.SetBool("iUseVolumetricNoise", useVolumetricNoise);
-
-
-        //We multiply by two because we have a buffer if some ray hits does perfeclty 2 steps by diagonals 
-        //https://medium.com/geekculture/dda-line-drawing-algorithm-be9f069921cf
-        shader.SetInt("iMaxSteps", (int)voxelTransparent3DSizes.magnitude * 2);
-
-        //Skyboxes
-        shader.SetTexture(kernelHandle, "cubemap", cubemap);
-        shader.SetBool("iUseProceduralSkyBox", useProceduralSkybox);
-
-
-        //Debugs
-        shader.SetBool("iNormalDebugView", debugMode == RenderDebugMode.Normal);
-        shader.SetBool("iReflectedDirDebugView", debugMode == RenderDebugMode.ReflectedDirection);
-        shader.SetBool("iUVDebugView", debugMode == RenderDebugMode.UV);
-        shader.SetBool("iLightOnlyDebugView", debugMode == RenderDebugMode.Light);
-        shader.SetBool("iBlurDebugView", debugMode == RenderDebugMode.Blur);
-
-
-        lightBuffer.UpdateData(kernelHandle, shader);
-
-        int x = settings.resolution.x / 8;
-        int y = settings.resolution.y / 8;
-        shader.Dispatch(kernelHandle, x, y, 1);
-
-        return outputTexture;
-    }
 
     public void SetSettings(in VoxelRayTracerSettings settings)
     {
@@ -258,6 +187,42 @@ public class VoxelRayTracerAPI
     {
         this.debugMode = debugMode;
     }
+
+    protected void SetResolutionParameterInShader(ComputeShader shader)
+    {
+        shader.SetVector("iResolution", new Vector4(settings.resolution.x, settings.resolution.y, 1, 1));
+    }
+
+    protected void SetCameraParametersInShader(ComputeShader shader)
+    {
+        //If I want to port this outside of unity lol
+        shader.SetBool("iUseFreeCamera", useFreeCamera);
+        shader.SetBool("iCameraIsOrtho", isCameraOrtho);
+
+        Vector3 alignedCameraPos = centerAtZero ? CenterAtZero(cameraPos) : cameraPos;
+
+        //Free Cam
+        if (useFreeCamera)
+        {
+            shader.SetVector("iCameraPos", alignedCameraPos);
+            shader.SetVector("iCameraRot", new Vector4(cameraRot.x, cameraRot.y, cameraRot.z, cameraRot.w));
+            shader.SetFloat("iCameraFOV", fov);
+        }
+        else
+        {
+            //Unity Cam
+            shader.SetMatrix("iCameraToWorld", mainCamera.cameraToWorldMatrix);
+            shader.SetMatrix("iCameraInverseProjection", mainCamera.projectionMatrix.inverse);
+        }
+    }
+
+    protected void SetOpaqueVoxelInShader(ComputeShader shader, int kernelHandle = 0)
+    {
+        //Voxel opaque geometry
+        shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
+        shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
+    }
+
 }
 
 [System.Serializable]

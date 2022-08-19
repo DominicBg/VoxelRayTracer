@@ -162,7 +162,7 @@ float SampleVolumetricNoise(float3 p, Texture3D<float> volumetricNoise)
 {
     //Simple fbm sampling
     float f;
-    f  = 0.5000 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
+    f = 0.5000 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
     f += 0.2500 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
     f += 0.0800 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
     f += 0.0625 * volumetricNoise.SampleLevel(sampler_Trilinear_Repeat, p, 0).x; p = p * 2.0;
@@ -174,7 +174,7 @@ float SampleVolumetricNoise(float3 p, Texture3D<float> volumetricNoise)
 float4 CalculateVolumetricLight(float3 ro, float3 rd, in LightData lightData, float maxDist, in SceneData sceneData)
 {
     float startDist, endDist;
-    if(!RaySphereIntersection(ro, rd, lightData.position, lightData.radius, startDist, endDist))
+    if (!RaySphereIntersection(ro, rd, lightData.position, lightData.radius, startDist, endDist))
     {
         //The ray doesn't intersect with the light radius, just skip
         return 0;
@@ -193,7 +193,7 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, in LightData lightData, fl
     for (int i = 0; i < steps; i++)
     {
         float currentDist = startDist + float(i) * dx;
-            
+        
         if (currentDist > maxDist || currentDist > endDist) break;
         //if (currentDist > maxDist) break;
         
@@ -235,4 +235,20 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, float maxDist, in SceneDat
     }
     return saturate(volumetricLightSum);
 }
+
+float3 CalculateFogColor(float3 currentCol, float fogCol, float fogDensity)
+{
+    return lerp(currentCol, fogCol, saturate(fogDensity));
+}
+
+float CalculateFogDensity(RayHit hit, float intensity, float densityFallOff)
+{
+    float3 ro = hit.ro;
+    float3 rd = hit.rd;
+    float dist = hit.dist;
+    float i = intensity;
+    float d = densityFallOff;
+    return (i / d) * exp(-ro.y * d) * (1.0 - exp(-dist * rd.y * d)) / rd.y;
+}
+
 #endif

@@ -1,0 +1,48 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+#include "Utils/CameraUtils.cginc"
+#include "VoxelRayTracerDatas.cginc"
+
+float2 iResolution;
+
+//Cams
+bool iUseFreeCamera;
+
+float3 iCameraPos;
+float4 iCameraRot;
+float iCameraFOV;
+bool iCameraIsOrtho;
+
+float4x4 iCameraToWorld;
+float4x4 iCameraInverseProjection;
+
+RWTexture2D<float4> OutputRayOrigin;
+RWTexture2D<float4> OutputRayDirection;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = (float2(id.xy) / iResolution.xy) * 2.0 - 1.0;
+    float3 ro, rd;
+
+    if (iUseFreeCamera)
+    {
+        float aspectRatio = CalculateAspectRatio(iResolution);
+        if (iCameraIsOrtho)
+        {
+            OrthographicCam(iCameraPos, iCameraRot, uv, iCameraFOV, aspectRatio, ro, rd);
+        }
+        else
+        {
+            PerspectiveCam(iCameraPos, iCameraRot, uv, iCameraFOV, aspectRatio, ro, rd);
+        }
+    }
+    else
+    {
+        CreateCameraRay(uv, iCameraToWorld, iCameraInverseProjection, ro, rd);
+    }
+
+    OutputRayOrigin[id.xy] = float4(ro, 1);
+    OutputRayDirection[id.xy] = float4(rd, 1);
+}

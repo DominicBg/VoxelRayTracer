@@ -10,7 +10,7 @@ public abstract class RenderTexture3DGenerator : MonoBehaviour
     [SerializeField] string kernelName = "CSMain";
 
     int kernelHandle;
-    public RenderTexture renderTexture3D;
+    RenderTexture renderTexture3D;
     protected abstract RenderTextureFormat TextureType();
 
     private void Awake()

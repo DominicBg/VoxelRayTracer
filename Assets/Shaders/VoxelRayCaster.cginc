@@ -1,6 +1,8 @@
 #ifndef _VoxelRayCaster
 #define _VoxelRayCaster
 
+#include "VoxelRayTracerDatas.cginc"
+
 
 struct BoxIntersectionResult
 {

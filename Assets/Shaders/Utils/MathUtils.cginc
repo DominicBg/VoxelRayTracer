@@ -291,7 +291,7 @@ bool RaySphereIntersection(float3 ro, float3 rd, float3 spherePos, float sphereR
 	float tc = dot(l, rd);
 	
 	if (tc < 0.0) return false;
-	float d2 = (tc*tc) - dot(l, l);
+	float d2 = (tc * tc) - dot(l, l);
 	
 	float radius2 = sphereRadius * sphereRadius;
 	if (d2 > radius2) return false;

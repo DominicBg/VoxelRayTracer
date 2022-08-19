@@ -1,0 +1,55 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+#include "VoxelRayCaster.cginc"
+
+
+Texture3D<uint> voxel;
+uint3 iVoxelSizes;
+
+Texture2D<float4> InputRayOrigin;
+Texture2D<float4> InputRayDirection;
+
+RWTexture2D<float> OutputHitPositionDistance;
+RWTexture2D<float4> OutputHitNormal;
+
+
+SceneData GetSceneData()
+{
+    // settings.blurIterations = iBlurIteration;
+    // settings.shadowIterations = iShadowIteration;
+    // settings.volumetricLightSteps = iVolumetricLightSteps;
+    // settings.maxSteps = iMaxSteps;
+
+    Settings settings;
+    settings.blurIterations = 0;
+    settings.shadowIterations = 0;
+    settings.volumetricLightSteps = 0;
+    settings.maxSteps = 250;
+
+    SceneData sceneData;
+    sceneData.settings = settings;
+    sceneData.voxel = voxel;
+    sceneData.time = 0;
+    sceneData.voxelSizes = iVoxelSizes;
+
+    return sceneData;
+    //sceneData.lightDatas = lightDatas;
+    //sceneData.volumetricNoise = volumetricNoise;
+}
+
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float3 rd = InputRayOrigin[id.xy];
+    float3 ro = InputRayDirection[id.xy];
+
+    RayHit hit = RayCast(ro, rd, GetSceneData());
+
+    OutputHitPositionDistance[id.xy].rgb = hit.pos;
+    OutputHitPositionDistance[id.xy].a = hit.dist;
+
+    OutputHitNormal[id.xy].rgb = hit.normal;
+    OutputHitNormal[id.xy].a = 1; //unused
+}
