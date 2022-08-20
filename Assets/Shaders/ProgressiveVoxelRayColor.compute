@@ -1,0 +1,77 @@
+#pragma kernel CSMain
+
+#include "VoxelMaterialLink.cginc"
+#include "VoxelRayTracerDatas.cginc"
+
+
+Texture3D<uint> voxel;
+StructuredBuffer<LightData> lightDatas;
+uint3 iVoxelSizes;
+
+Texture2D<float4> InRayOrigin;
+Texture2D<float4> InRayDirection;
+Texture2D<float4> InHitPositionDistance;
+Texture2D<uint> InHitMaterialID;
+
+RWTexture2D<float4> InOutHitNormalHasHit; //normal = xyz, has hit = w
+
+RWTexture2D<float4> OutColor;
+int frameCount;
+
+
+SceneData GetSceneData()
+{
+    Settings settings;
+    settings.blurIterations = 0;
+    settings.shadowIterations = 0;
+    settings.volumetricLightSteps = 0;
+    settings.maxSteps = 250;
+
+    SceneData sceneData;
+    sceneData.settings = settings;
+    sceneData.voxel = voxel;
+    sceneData.time = 0;
+    sceneData.voxelSizes = iVoxelSizes;
+    sceneData.lightDatas = lightDatas;
+    sceneData.seed = frameCount;
+
+
+    return sceneData;
+}
+
+RayHit GetRayHit(uint2 i)
+{
+    RayHit hit;
+    hit.ro = InRayOrigin[i].xyz;
+    hit.rd = InRayDirection[i].xyz;
+    hit.dist = InHitPositionDistance[i].w;
+    hit.materialID = InHitMaterialID[i];
+    hit.normal = InOutHitNormalHasHit[i].xyz;
+    hit.hasHit = InOutHitNormalHasHit[i].w;
+
+    hit.pos = hit.ro + hit.rd * hit.dist;
+    hit.cell = uint3(hit.pos - hit.normal * 0.1);
+    hit.reflDir = reflect(hit.rd, hit.normal);
+
+    hit.uv = 0; // lol
+    hit.dist2 = 0; //lol
+    return hit;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    SceneData sceneData = GetSceneData();
+    RayHit hit = GetRayHit(id.xy);
+
+    if(!hit.hasHit)
+    {
+        OutColor[id.xy] = float4(SampleSkybox(sceneData, hit), 1);
+        return;   
+    }
+
+    Material material = GetColor(hit.materialID, sceneData, hit);
+    OutColor[id.xy] = float4(material.color, 1);
+
+    InOutHitNormalHasHit[id.xy] = float4(hit.normal, hit.hasHit);
+}

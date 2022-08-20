@@ -17,8 +17,8 @@ bool iCameraIsOrtho;
 float4x4 iCameraToWorld;
 float4x4 iCameraInverseProjection;
 
-RWTexture2D<float4> OutputRayOrigin;
-RWTexture2D<float4> OutputRayDirection;
+RWTexture2D<float4> OutRayOrigin;
+RWTexture2D<float4> OutRayDirection;
 
 [numthreads(8, 8, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
@@ -43,6 +43,6 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         CreateCameraRay(uv, iCameraToWorld, iCameraInverseProjection, ro, rd);
     }
 
-    OutputRayOrigin[id.xy] = float4(ro, 1);
-    OutputRayDirection[id.xy] = float4(rd, 1);
+    OutRayOrigin[id.xy] = float4(ro, 1);
+    OutRayDirection[id.xy] = float4(rd, 1);
 }

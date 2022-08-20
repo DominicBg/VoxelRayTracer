@@ -396,7 +396,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fixedVoxellRayTracerShader: {fileID: 7200000, guid: bd9d6bbb5b2e63a45985ca361eee843d, type: 3}
   progressiveCameraRayCalculator: {fileID: 7200000, guid: cd474e903d363ad45b4fd92e9b834fbe, type: 3}
-  progressiveSingleRayCaster: {fileID: 7200000, guid: 3bb172e904a392f498077bab14298eb3, type: 3}
+  progressiveRayCaster: {fileID: 7200000, guid: 3bb172e904a392f498077bab14298eb3, type: 3}
+  progressiveCalculatePixelColor: {fileID: 7200000, guid: e3059a4212306f542b3d7b5adffa6f83, type: 3}
+  progressiveRayBounce: {fileID: 7200000, guid: cbb72230d26e0ba4292e1aa288a5c425, type: 3}
+  progressiveRollingAverage: {fileID: 7200000, guid: 7ddf95e7d40f737478f21bf9ac90e522, type: 3}
   voxelGenerator: {fileID: 1141573245}
   voxelTransparentGenerator: {fileID: 714045225}
   volumetricNoiseGenerator: {fileID: 1488325159}
@@ -409,7 +412,7 @@ MonoBehaviour:
   settings:
     reflectionCount: 3
     blurIteration: 0
-    shadowIteration: 5
+    shadowIteration: 1
     volumetricLightSteps: 0
     resolution: {x: 800, y: 600}
   lightDataComponents:

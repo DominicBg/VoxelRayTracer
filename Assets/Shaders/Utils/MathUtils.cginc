@@ -235,6 +235,13 @@ uint NextState(uint state)
     return state;
 }
 
+float NextFloat(inout uint state)
+{
+    state = NextState(state);
+    int n = int(state % 1000u);
+    return float(n) / 1000.;   
+}
+
 float NextFloat(float xmin, float xmax, inout uint state)
 {
     state = NextState(state);
@@ -278,6 +285,24 @@ float3 NextRandomDirection(float3 direction, float spread, inout uint state)
  
   // Construct the vector that has coordinates (x,y,z) in the basis formed by b1, b2, b3
   return x * b1 + y * b2 + z * b3;
+}
+
+float3 RandomInSphere(inout uint state) 
+{
+    float u = NextFloat(state);
+    float v = NextFloat(state);
+    float theta = u * 2.0 * PI;
+    float phi = acos(2.0 * v - 1.0);
+    //float r = cbrt(NextFloat(state)); //doesn't exist
+    float r = pow(NextFloat(state), 1./3.); //cube root
+    float sinTheta = sin(theta);
+    float cosTheta = cos(theta);
+    float sinPhi = sin(phi);
+    float cosPhi = cos(phi);
+    float x = r * sinPhi * cosTheta;
+    float y = r * sinPhi * sinTheta;
+    float z = r * cosPhi;
+    return float3(x, y, z);
 }
  
 

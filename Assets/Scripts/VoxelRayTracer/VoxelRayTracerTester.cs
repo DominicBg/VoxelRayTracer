@@ -13,7 +13,10 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     [Header("Progressive")]
     public ComputeShader progressiveCameraRayCalculator;
-    public ComputeShader progressiveSingleRayCaster;
+    public ComputeShader progressiveRayCaster;
+    public ComputeShader progressiveCalculatePixelColor;
+    public ComputeShader progressiveRayBounce;
+    public ComputeShader progressiveRollingAverage;
 
     [Header("Voxel")]
     public VoxelGenerator voxelGenerator;
@@ -52,7 +55,7 @@ public class VoxelRayTracerTester : MonoBehaviour
     {
         if (useProgressiveRenderer)
         {
-            api = new ProgressiveVoxelRayTracerAPI(progressiveCameraRayCalculator, progressiveSingleRayCaster);
+            api = new ProgressiveVoxelRayTracerAPI(progressiveCameraRayCalculator, progressiveRayCaster, progressiveCalculatePixelColor, progressiveRayBounce, progressiveRollingAverage);
         }
         else
         {

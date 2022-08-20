@@ -78,10 +78,16 @@ float SoftShadow(float3 lightPos, float lightRadius, float penumbraRadius, float
 
     int shadowHits = 0;
 
+    shadowIterations = max(shadowIterations, 1);
+
+    uint rngState = WangHash(uint(sceneData.seed * 1.627) + 1627);
+    
     [loop]
     for (int i = 0; i < shadowIterations; i++)
     {
-        float3 tempLightPos = lightPos + penumbraRadius * ShittyRandom(float(i));
+        //TODO implement a better random
+        //float3 tempLightPos = lightPos + penumbraRadius * ShittyRandom(float(i) + sceneData.seed * 3.12777);
+        float3 tempLightPos = lightPos + penumbraRadius * RandomInSphere(rngState);
         float3 templdir = normalize(tempLightPos - position);
         
         RayHit shadowRay = RayCast(position + normal * 0.001, templdir, sceneData);
@@ -131,7 +137,8 @@ float3 BasicLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
             float3 diffuse = DiffuseLight(lightData, hit);
             float3 spec = SpecularLight(lightData, hit);
             //#ifdef HD
-            float shadow = (sceneData.settings.shadowIterations > 1) ? SoftShadow(lightData, hit, sceneData) : HardShadow(lightData, hit, sceneData);
+            //float shadow = (sceneData.settings.shadowIterations > 1) ? SoftShadow(lightData, hit, sceneData) : HardShadow(lightData, hit, sceneData);
+            float shadow = SoftShadow(lightData, hit, sceneData);
             //#else
             //            float shadow = HardShadow(lightData, hit, sceneData);
             //#endif

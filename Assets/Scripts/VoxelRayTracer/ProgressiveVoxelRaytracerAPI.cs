@@ -5,24 +5,31 @@ using UnityEngine;
 public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 {
     ComputeShader cameraRayCalculator;
-    ComputeShader singleRayCaster;
+    ComputeShader rayCaster;
+    ComputeShader calculatePixelColor;
+    ComputeShader bounceRay;
+    ComputeShader rollingAverage;
 
     RenderTexture rayOrigin;
     RenderTexture rayDirection;
 
     RenderTexture hitPositionDistance;
-    RenderTexture hitNormal;
+    RenderTexture hitMaterialID;
+    RenderTexture hitNormalHasHit;
 
-    int kernelHandle1;
-    int kernelHandle2;
+    RenderTexture frameColor;
 
-    public ProgressiveVoxelRayTracerAPI(ComputeShader cameraRayCalculator, ComputeShader singleRayCaster) : base()
+    int frameCount;
+    Vector3 previousCamPos;
+    Quaternion previousCamRot;
+
+    public ProgressiveVoxelRayTracerAPI(ComputeShader cameraRayCalculator, ComputeShader rayCaster, ComputeShader calculatePixelColor, ComputeShader bounceRay, ComputeShader rollingAverage) : base()
     {
         this.cameraRayCalculator = cameraRayCalculator;
-        this.singleRayCaster = singleRayCaster;
-
-        kernelHandle1 = cameraRayCalculator.FindKernel("CSMain");
-        kernelHandle2 = singleRayCaster.FindKernel("CSMain");
+        this.rayCaster = rayCaster;
+        this.calculatePixelColor = calculatePixelColor;
+        this.bounceRay = bounceRay;
+        this.rollingAverage = rollingAverage;
     }
 
 
@@ -32,7 +39,12 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         EnsureTexture(ref rayDirection, settings.resolution, RenderTextureFormat.ARGBFloat); //one useless byte
 
         EnsureTexture(ref hitPositionDistance, settings.resolution, RenderTextureFormat.ARGBFloat);
-        EnsureTexture(ref hitNormal, settings.resolution, RenderTextureFormat.ARGBFloat); //one useless byte
+        EnsureTexture(ref hitNormalHasHit, settings.resolution, RenderTextureFormat.ARGBFloat); //one useless byte
+
+        EnsureTexture(ref hitMaterialID, settings.resolution, RenderTextureFormat.RInt); 
+
+        EnsureTexture(ref frameColor, settings.resolution, RenderTextureFormat.ARGBFloat);
+        EnsureTexture(ref outputTexture, settings.resolution, RenderTextureFormat.ARGBFloat);
     }
 
     void EnsureTexture(ref RenderTexture renderTexture, Vector2Int resolution, RenderTextureFormat textureFormat)
@@ -50,57 +62,106 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         SetCameraParametersInShader(cameraRayCalculator);
         SetResolutionParameterInShader(cameraRayCalculator);
 
-        cameraRayCalculator.SetTexture(kernelHandle1, "OutputRayOrigin", rayOrigin);
-        cameraRayCalculator.SetTexture(kernelHandle1, "OutputRayDirection", rayDirection);
+        cameraRayCalculator.SetTexture(0, "OutRayOrigin", rayOrigin);
+        cameraRayCalculator.SetTexture(0, "OutRayDirection", rayDirection);
 
-        int x = settings.resolution.x / 8;
-        int y = settings.resolution.y / 8;
-        cameraRayCalculator.Dispatch(kernelHandle1, x, y, 1);
+        Dispatch(cameraRayCalculator);
     }
 
     void CastRays()
     {
-        SetOpaqueVoxelInShader(singleRayCaster, 0);
+        SetOpaqueVoxelInShader(rayCaster);
 
-        singleRayCaster.SetTexture(kernelHandle2, "InputRayOrigin", rayOrigin);
-        singleRayCaster.SetTexture(kernelHandle2, "InputRayDirection", rayDirection);
+        rayCaster.SetTexture(0, "InRayOrigin", rayOrigin);
+        rayCaster.SetTexture(0, "InRayDirection", rayDirection);
 
-        singleRayCaster.SetTexture(kernelHandle2, "OutputHitPositionDistance", hitPositionDistance);
-        singleRayCaster.SetTexture(kernelHandle2, "OutputHitNormal", hitNormal);
+        rayCaster.SetTexture(0, "OutHitPositionDistance", hitPositionDistance);
+        rayCaster.SetTexture(0, "OutHitNormalHasHit", hitNormalHasHit);
+        rayCaster.SetTexture(0, "OutHitMaterialID", hitMaterialID);
 
-        int x = settings.resolution.x / 8;
-        int y = settings.resolution.y / 8;
-        singleRayCaster.Dispatch(kernelHandle2, x, y, 1);
+        Dispatch(rayCaster);
     }
 
     void CalculatePixelColors()
     {
+        SetOpaqueVoxelInShader(calculatePixelColor, 0);
+        SetResolutionParameterInShader(calculatePixelColor);
 
+        calculatePixelColor.SetTexture(0, "InRayOrigin", rayOrigin);
+        calculatePixelColor.SetTexture(0, "InRayDirection", rayDirection);
+
+        calculatePixelColor.SetTexture(0, "InHitPositionDistance", hitPositionDistance);
+        calculatePixelColor.SetTexture(0, "InOutHitNormalHasHit", hitNormalHasHit);
+        calculatePixelColor.SetTexture(0, "InHitMaterialID", hitMaterialID);
+
+        calculatePixelColor.SetTexture(0, "OutColor", frameColor);
+        calculatePixelColor.SetInt("frameCount", frameCount);
+
+        lightBuffer.UpdateData(0, calculatePixelColor);
+
+        Dispatch(calculatePixelColor);
+    }
+
+    void CalculateVolumetricLight()
+    {
+        //Calculate lowrez volumetric light and gaussian blur
     }
 
     void CalculateRayBounces()
     {
+        bounceRay.SetTexture(0, "InHitPositionDistance", hitPositionDistance);
+        bounceRay.SetTexture(0, "InOutHitNormalHasHit", hitNormalHasHit);
+        bounceRay.SetTexture(0, "InHitMaterialID", hitMaterialID);
 
+        bounceRay.SetTexture(0, "InOutRayOrigin", rayOrigin);
+        bounceRay.SetTexture(0, "InOutRayDirection", rayDirection);
+
+        Dispatch(bounceRay);
+    }
+
+    void ComputeRollingAverage()
+    {
+        rollingAverage.SetInt("frameCount", frameCount);
+        rollingAverage.SetTexture(0, "InFrameColor", frameColor);
+        rollingAverage.SetTexture(0, "InOutColorAverage", outputTexture);
+        Dispatch(rollingAverage);
+    }
+
+    void Dispatch(ComputeShader computeShader)
+    {
+        int x = settings.resolution.x / 8;
+        int y = settings.resolution.y / 8;
+        computeShader.Dispatch(0, x, y, 1);
     }
 
 
     public override RenderTexture RenderToTexture(float t)
     {
+        if(previousCamPos != cameraPos || previousCamRot != cameraRot)
+        {
+            frameCount = 0;
+            previousCamPos = cameraPos;
+            previousCamRot = cameraRot;
+        }
+
         EnsureTextures();
         PrepareFirstRays();
 
-        for (int i = 0; i < settings.reflectionCount; i++)
+        for (int i = 0; i < 3; i++)
         {
             CastRays();
             CalculatePixelColors();
+            CalculateVolumetricLight();
+            ComputeRollingAverage();
 
-            if(i != settings.reflectionCount - 1)
+            if (i != settings.reflectionCount - 1)
             {
                 CalculateRayBounces();
             }
         }
 
-        //TODO changes to real pixels
-        return hitNormal;
+        frameCount++;
+
+        return outputTexture;
     }
 }

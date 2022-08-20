@@ -1,0 +1,44 @@
+#pragma kernel CSMain
+
+#include "VoxelMaterialLink.cginc"
+#include "VoxelRayTracerDatas.cginc"
+
+Texture2D<float4> InHitPositionDistance;
+Texture2D<float4> InHitNormal;
+Texture2D<uint> InHitMaterialID;
+
+RWTexture2D<float4> InOutRayOrigin;
+RWTexture2D<float4> InOutRayDirection;
+
+RayHit GetHit(uint2 i)
+{
+    RayHit hit;
+    hit.ro = InOutRayOrigin[i].xyz;
+    hit.rd = InOutRayDirection[i].xyz;
+    hit.dist = InHitPositionDistance[i].w;
+    hit.materialID = InHitMaterialID[i];
+    hit.normal = InHitNormal[i].xyz;
+    hit.pos = hit.ro + hit.rd * hit.dist;
+    hit.cell = uint3(hit.pos - hit.normal * 0.1);
+    hit.reflDir = reflect(hit.rd, hit.normal);
+
+    hit.hasHit = hit.dist < 500; // lol
+    hit.uv = 0; // lol
+    hit.dist2 = 0; //lol
+    return hit;
+}
+
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint2 i = id.xy;
+    RayHit hit = GetHit(i);
+
+    //Bounce differently based on the material
+
+    float3 newHitPos = hit.pos + hit.normal * 0.01;
+    InOutRayOrigin[i] = float4(newHitPos, 1);
+    InOutRayDirection[i] = float4(hit.reflDir, 1);
+}
+

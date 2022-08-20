@@ -17,26 +17,6 @@ public class FixedVoxelRayTracerAPI : VoxelRayTracerAPI
     {
         shader.SetFloat("iTime", t);
 
-        ////If I want to port this outside of unity lol
-        //shader.SetBool("iUseFreeCamera", useFreeCamera);
-        //shader.SetBool("iCameraIsOrtho", isCameraOrtho);
-
-        //Vector3 alignedCameraPos = centerAtZero ? CenterAtZero(cameraPos) : cameraPos;
-
-        ////Free Cam
-        //if (useFreeCamera)
-        //{
-        //    shader.SetVector("iCameraPos", alignedCameraPos);
-        //    shader.SetVector("iCameraRot", new Vector4(cameraRot.x, cameraRot.y, cameraRot.z, cameraRot.w));
-        //    shader.SetFloat("iCameraFOV", fov);
-        //}
-        //else
-        //{
-        //    //Unity Cam
-        //    shader.SetMatrix("iCameraToWorld", mainCamera.cameraToWorldMatrix);
-        //    shader.SetMatrix("iCameraInverseProjection", mainCamera.projectionMatrix.inverse);
-        //}
-
         SetCameraParametersInShader(shader);
         SetResolutionParameterInShader(shader);
 
@@ -46,9 +26,6 @@ public class FixedVoxelRayTracerAPI : VoxelRayTracerAPI
         shader.SetInt("iShadowIteration", settings.shadowIteration);
         shader.SetInt("iVolumetricLightSteps", settings.volumetricLightSteps);
 
-        ////Voxel opaque geometry
-        //shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
-        //shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
         SetOpaqueVoxelInShader(shader, kernelHandle);
 
         //Voxel transparent geometry

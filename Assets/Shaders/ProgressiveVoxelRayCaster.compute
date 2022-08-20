@@ -7,11 +7,12 @@
 Texture3D<uint> voxel;
 uint3 iVoxelSizes;
 
-Texture2D<float4> InputRayOrigin;
-Texture2D<float4> InputRayDirection;
+Texture2D<float4> InRayOrigin;
+Texture2D<float4> InRayDirection;
 
-RWTexture2D<float> OutputHitPositionDistance;
-RWTexture2D<float4> OutputHitNormal;
+RWTexture2D<float4> OutHitPositionDistance;
+RWTexture2D<float4> OutHitNormalHasHit; //normal = xyz, has hit = w
+RWTexture2D<uint> OutHitMaterialID;
 
 
 SceneData GetSceneData()
@@ -33,6 +34,7 @@ SceneData GetSceneData()
     sceneData.time = 0;
     sceneData.voxelSizes = iVoxelSizes;
 
+
     return sceneData;
     //sceneData.lightDatas = lightDatas;
     //sceneData.volumetricNoise = volumetricNoise;
@@ -42,14 +44,12 @@ SceneData GetSceneData()
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float3 rd = InputRayOrigin[id.xy];
-    float3 ro = InputRayDirection[id.xy];
+    float3 ro = InRayOrigin[id.xy];
+    float3 rd = InRayDirection[id.xy];
 
     RayHit hit = RayCast(ro, rd, GetSceneData());
 
-    OutputHitPositionDistance[id.xy].rgb = hit.pos;
-    OutputHitPositionDistance[id.xy].a = hit.dist;
-
-    OutputHitNormal[id.xy].rgb = hit.normal;
-    OutputHitNormal[id.xy].a = 1; //unused
+    OutHitPositionDistance[id.xy] = float4(hit.pos, hit.dist);
+    OutHitNormalHasHit[id.xy] = float4((hit.normal), hit.hasHit);
+    OutHitMaterialID[id.xy] = hit.materialID;
 }

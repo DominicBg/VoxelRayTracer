@@ -41,6 +41,7 @@ public abstract class VoxelRayTracerAPI
        // shader = computeShader;
         //kernelHandle = shader.FindKernel("CSMain");
 
+
         lightBuffer = new ListBuffer<LightData>("lightDatas", sizeof(LightData));
         fakeCubemap = new Cubemap(1, TextureFormat.Alpha8, false);
  
@@ -218,7 +219,6 @@ public abstract class VoxelRayTracerAPI
 
     protected void SetOpaqueVoxelInShader(ComputeShader shader, int kernelHandle = 0)
     {
-        //Voxel opaque geometry
         shader.SetTexture(kernelHandle, "voxel", voxelTexture3D);
         shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
     }

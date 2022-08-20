@@ -1,0 +1,16 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> InFrameColor;
+RWTexture2D<float4> InOutColorAverage;
+int frameCount;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    float3 frameColor = InFrameColor[id.xy].rgb;
+    float3 colAverage = InOutColorAverage[id.xy].rgb;
+
+    float t = (1. / float(frameCount + 1));
+    
+    InOutColorAverage[id.xy] = float4(lerp(colAverage, frameColor, t), 1);
+}

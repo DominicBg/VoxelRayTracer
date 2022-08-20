@@ -57,6 +57,7 @@ struct SceneData
     StructuredBuffer<LightData> lightDatas;
     Settings settings;
     float time;
+    uint seed;
     int3 voxelSizes;
 };
 
