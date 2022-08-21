@@ -29,6 +29,18 @@ Material GetColor(uint materialID, in SceneData sceneData, inout RayHit hit)
     return material;
 }
 
+float GetDiffuseCoef(in RayHit hit)
+{
+    switch(hit.materialID)
+    {
+        case 1: return 0.0;
+        case 2: return 1.0;
+        case 3: return 0.5;
+        default: break;
+    }
+    return 0;
+}
+
 float3 SampleSkybox(in SceneData sceneData, in RayHit hit)
 {
     return SampleSimpleSkybox(hit.ro, hit.rd, sceneData.time);

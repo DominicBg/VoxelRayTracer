@@ -17,6 +17,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
     RenderTexture hitMaterialID;
     RenderTexture hitNormalHasHit;
 
+    RenderTexture frameSurfaceColor;
     RenderTexture frameColor;
 
     int frameCount;
@@ -43,7 +44,9 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 
         EnsureTexture(ref hitMaterialID, settings.resolution, RenderTextureFormat.RInt); 
 
+        EnsureTexture(ref frameSurfaceColor, settings.resolution, RenderTextureFormat.ARGBFloat);
         EnsureTexture(ref frameColor, settings.resolution, RenderTextureFormat.ARGBFloat);
+
         EnsureTexture(ref outputTexture, settings.resolution, RenderTextureFormat.ARGBFloat);
     }
 
@@ -82,7 +85,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         Dispatch(rayCaster);
     }
 
-    void CalculatePixelColors()
+    void CalculateFrameColors(int reflectionCount)
     {
         SetOpaqueVoxelInShader(calculatePixelColor, 0);
         SetResolutionParameterInShader(calculatePixelColor);
@@ -94,8 +97,11 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         calculatePixelColor.SetTexture(0, "InOutHitNormalHasHit", hitNormalHasHit);
         calculatePixelColor.SetTexture(0, "InHitMaterialID", hitMaterialID);
 
-        calculatePixelColor.SetTexture(0, "OutColor", frameColor);
-        calculatePixelColor.SetInt("frameCount", frameCount);
+        calculatePixelColor.SetTexture(0, "OutSurfaceColor", frameSurfaceColor);
+        calculatePixelColor.SetTexture(0, "OutFrameColor", frameColor);
+
+        calculatePixelColor.SetInt("frameCount", frameCount); //used for seed
+        calculatePixelColor.SetInt("reflectionCount", reflectionCount);
 
         lightBuffer.UpdateData(0, calculatePixelColor);
 
@@ -110,11 +116,13 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
     void CalculateRayBounces()
     {
         bounceRay.SetTexture(0, "InHitPositionDistance", hitPositionDistance);
-        bounceRay.SetTexture(0, "InOutHitNormalHasHit", hitNormalHasHit);
+        bounceRay.SetTexture(0, "InHitNormal", hitNormalHasHit);
         bounceRay.SetTexture(0, "InHitMaterialID", hitMaterialID);
 
         bounceRay.SetTexture(0, "InOutRayOrigin", rayOrigin);
         bounceRay.SetTexture(0, "InOutRayDirection", rayDirection);
+
+        bounceRay.SetInt("frameCount", frameCount); //used for seed
 
         Dispatch(bounceRay);
     }
@@ -137,7 +145,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 
     public override RenderTexture RenderToTexture(float t)
     {
-        if(previousCamPos != cameraPos || previousCamRot != cameraRot)
+        if(previousCamPos != cameraPos || previousCamRot != cameraRot || Input.GetKey(KeyCode.Space))
         {
             frameCount = 0;
             previousCamPos = cameraPos;
@@ -147,12 +155,11 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         EnsureTextures();
         PrepareFirstRays();
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < settings.reflectionCount; i++)
         {
             CastRays();
-            CalculatePixelColors();
+            CalculateFrameColors(i);
             CalculateVolumetricLight();
-            ComputeRollingAverage();
 
             if (i != settings.reflectionCount - 1)
             {
@@ -160,6 +167,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
             }
         }
 
+        ComputeRollingAverage();
         frameCount++;
 
         return outputTexture;

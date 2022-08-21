@@ -201,7 +201,7 @@ void PrepareSceneData()
     sceneData.time = iTime;
     sceneData.voxelSizes = iVoxelSizes;
     sceneData.volumetricNoise = volumetricNoise;
-    sceneData.seed = 0;
+    sceneData.seed = 14771;
 }
 
 [numthreads(8, 8, 1)]

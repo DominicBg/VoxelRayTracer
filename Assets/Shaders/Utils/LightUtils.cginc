@@ -80,7 +80,7 @@ float SoftShadow(float3 lightPos, float lightRadius, float penumbraRadius, float
 
     shadowIterations = max(shadowIterations, 1);
 
-    uint rngState = WangHash(uint(sceneData.seed * 1.627) + 1627);
+    uint rngState = sceneData.seed;
     
     [loop]
     for (int i = 0; i < shadowIterations; i++)

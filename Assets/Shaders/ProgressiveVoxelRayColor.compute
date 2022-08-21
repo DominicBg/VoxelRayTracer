@@ -2,6 +2,7 @@
 
 #include "VoxelMaterialLink.cginc"
 #include "VoxelRayTracerDatas.cginc"
+#include "Utils/MathUtils.cginc"
 
 
 Texture3D<uint> voxel;
@@ -15,17 +16,19 @@ Texture2D<uint> InHitMaterialID;
 
 RWTexture2D<float4> InOutHitNormalHasHit; //normal = xyz, has hit = w
 
-RWTexture2D<float4> OutColor;
+RWTexture2D<float4> OutSurfaceColor;
+RWTexture2D<float4> OutFrameColor;
 int frameCount;
+int reflectionCount;
 
 
-SceneData GetSceneData()
+SceneData GetSceneData(uint2 id)
 {
     Settings settings;
     settings.blurIterations = 0;
     settings.shadowIterations = 0;
     settings.volumetricLightSteps = 0;
-    settings.maxSteps = 250;
+    settings.maxSteps = iVoxelSizes.x * iVoxelSizes.y * iVoxelSizes.z * 2;
 
     SceneData sceneData;
     sceneData.settings = settings;
@@ -33,7 +36,7 @@ SceneData GetSceneData()
     sceneData.time = 0;
     sceneData.voxelSizes = iVoxelSizes;
     sceneData.lightDatas = lightDatas;
-    sceneData.seed = frameCount;
+    sceneData.seed = WangHash(frameCount + id.x * 61223  + id.y * 96737);
 
 
     return sceneData;
@@ -61,17 +64,50 @@ RayHit GetRayHit(uint2 i)
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    SceneData sceneData = GetSceneData();
+    SceneData sceneData = GetSceneData(id.xy);
     RayHit hit = GetRayHit(id.xy);
+
+    float3 waterCol = GetColor(201, 218, 245);
+    float3 grassColor = GetColor(68, 209, 63);
+    float3 brickColor = GetColor(55, 50, 61);
+
+    float3 col;
+    switch(hit.materialID)
+    {
+        case 1: col = waterCol; break;
+        case 2: col = grassColor; break;
+        case 3: col = brickColor; break;
+    }
+
+    float3 lightCol;
 
     if(!hit.hasHit)
     {
-        OutColor[id.xy] = float4(SampleSkybox(sceneData, hit), 1);
-        return;   
+        col = SampleSkybox(sceneData, hit);
+        lightCol = 1;
+    }
+    else
+    {
+        lightCol = BasicLight(sceneData, hit);
     }
 
-    Material material = GetColor(hit.materialID, sceneData, hit);
-    OutColor[id.xy] = float4(material.color, 1);
+    if(reflectionCount == 0)
+    {
+        OutSurfaceColor[id.xy] = float4(col, 1);
+        OutFrameColor[id.xy] = float4(lightCol * OutSurfaceColor[id.xy], 1);
+    }
+    else
+    {
+        OutSurfaceColor[id.xy] *= float4(col, 1);
+        OutFrameColor[id.xy] += float4(lightCol * OutSurfaceColor[id.xy], 1);
+    }
+
+    //Prevent future reflection
+    if(!hit.hasHit)
+    {
+        OutSurfaceColor[id.xy] = 0;
+    }
+
 
     InOutHitNormalHasHit[id.xy] = float4(hit.normal, hit.hasHit);
 }

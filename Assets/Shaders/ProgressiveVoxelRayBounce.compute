@@ -10,6 +10,8 @@ Texture2D<uint> InHitMaterialID;
 RWTexture2D<float4> InOutRayOrigin;
 RWTexture2D<float4> InOutRayDirection;
 
+int frameCount;
+
 RayHit GetHit(uint2 i)
 {
     RayHit hit;
@@ -18,11 +20,12 @@ RayHit GetHit(uint2 i)
     hit.dist = InHitPositionDistance[i].w;
     hit.materialID = InHitMaterialID[i];
     hit.normal = InHitNormal[i].xyz;
+    hit.hasHit = InHitNormal[i].w;
+
     hit.pos = hit.ro + hit.rd * hit.dist;
     hit.cell = uint3(hit.pos - hit.normal * 0.1);
     hit.reflDir = reflect(hit.rd, hit.normal);
 
-    hit.hasHit = hit.dist < 500; // lol
     hit.uv = 0; // lol
     hit.dist2 = 0; //lol
     return hit;
@@ -37,8 +40,21 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     //Bounce differently based on the material
 
+    float diffuseCoef = GetDiffuseCoef(hit);
+    float3 reflDir = reflect(hit.rd, hit.normal);
+
+
+
+    if(diffuseCoef > 0)
+    {
+        uint rngState = WangHash(frameCount + id.x * 61223  + id.y * 96737 );
+        float3 diffuseDir = normalize(reflDir + RandomInSphere(rngState));
+        float3 glossyDir = NextRandomDirection(reflDir, 0.1, rngState);
+        reflDir = lerp(glossyDir, diffuseDir, diffuseCoef);
+    }
+
     float3 newHitPos = hit.pos + hit.normal * 0.01;
     InOutRayOrigin[i] = float4(newHitPos, 1);
-    InOutRayDirection[i] = float4(hit.reflDir, 1);
+    InOutRayDirection[i] = float4(reflDir, 1);
 }
 

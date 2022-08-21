@@ -412,7 +412,7 @@ MonoBehaviour:
   settings:
     reflectionCount: 3
     blurIteration: 0
-    shadowIteration: 1
+    shadowIteration: 2
     volumetricLightSteps: 0
     resolution: {x: 800, y: 600}
   lightDataComponents:
@@ -771,7 +771,7 @@ MonoBehaviour:
   color: {r: 1, g: 0.9352594, b: 0.82452834, a: 1}
   intensity: 1
   radius: 100
-  penumbraRadius: 0.5
+  penumbraRadius: 1
   volumetricIntensity: 0.03
 --- !u!4 &1876802380
 Transform:
