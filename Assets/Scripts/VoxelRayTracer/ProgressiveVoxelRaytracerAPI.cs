@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 {
     ComputeShader cameraRayCalculator;
@@ -87,7 +88,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 
     void CalculateFrameColors(int reflectionCount)
     {
-        SetOpaqueVoxelInShader(calculatePixelColor, 0);
+        SetOpaqueVoxelInShader(calculatePixelColor);
         SetResolutionParameterInShader(calculatePixelColor);
 
         calculatePixelColor.SetTexture(0, "InRayOrigin", rayOrigin);

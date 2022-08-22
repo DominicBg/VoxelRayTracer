@@ -91,7 +91,6 @@ bool3 lessThanEqual(float3 a, float3 b)
 RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
 {
     //Optim to start the ray at the voxel structure
-    //BoxIntersectionResult voxelMapIntersection = BoxIntersection(-sceneData.voxelSizes/2, sceneData.voxelSizes/2, ro, rd);
     float skippedDist = 0;
     if (any(ro <= 0) || any(ro >= sceneData.voxelSizes))
     {
@@ -105,7 +104,7 @@ RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
             return hit;
         }
 
-        float3 startPos = ro + rd * voxelMapIntersection.dist1 - rd * 0.1;
+        float3 startPos = ro + rd * voxelMapIntersection.dist1 - rd * 0.001;
         float skippedDist = distance(startPos, ro);
         ro = startPos;
     }
@@ -119,10 +118,9 @@ RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
     int3 mapPos = int3(floor(ro + 0.));
 
     //todo comprendre wtf que ça fait ça
-    float lengthRayDir = length(rd);
-    float3 deltaDist = abs(lengthRayDir / rd);
+    float3 invRayLen = abs(1. / rd);
     int3 rayStep = int3(sign(rd));
-    float3 sideDist = (sign(rd) * (float3(mapPos) - ro) + (sign(rd) * 0.5) + 0.5) * deltaDist;
+    float3 sideDist = (sign(rd) * (float3(mapPos) - ro) + (sign(rd) * 0.5) + 0.5) * invRayLen;
     
     bool3 mask;
     
@@ -133,7 +131,7 @@ RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
 
         mask = lessThanEqual(sideDist.xyz, min(sideDist.yzx, sideDist.zxy));
 
-        sideDist += float3(mask) * deltaDist;
+        sideDist += float3(mask) * invRayLen;
         mapPos += int3(float3(mask)) * rayStep;
     }
     

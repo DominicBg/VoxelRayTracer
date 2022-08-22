@@ -7,7 +7,7 @@
 
 Texture3D<uint> voxel;
 StructuredBuffer<LightData> lightDatas;
-uint3 iVoxelSizes;
+float4 iVoxelSizes;
 
 Texture2D<float4> InRayOrigin;
 Texture2D<float4> InRayDirection;
@@ -28,16 +28,16 @@ SceneData GetSceneData(uint2 id)
     settings.blurIterations = 0;
     settings.shadowIterations = 0;
     settings.volumetricLightSteps = 0;
-    settings.maxSteps = iVoxelSizes.x * iVoxelSizes.y * iVoxelSizes.z * 2;
+    settings.maxSteps = length(iVoxelSizes) * 2;
+
 
     SceneData sceneData;
     sceneData.settings = settings;
     sceneData.voxel = voxel;
-    sceneData.time = 0;
-    sceneData.voxelSizes = iVoxelSizes;
+    sceneData.time = 52.4;
+    sceneData.voxelSizes = int3(iVoxelSizes.x, iVoxelSizes.y, iVoxelSizes.z); //test weird
     sceneData.lightDatas = lightDatas;
     sceneData.seed = WangHash(frameCount + id.x * 61223  + id.y * 96737);
-
 
     return sceneData;
 }
@@ -67,7 +67,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     SceneData sceneData = GetSceneData(id.xy);
     RayHit hit = GetRayHit(id.xy);
 
-    float3 waterCol = GetColor(201, 218, 245);
+    //modify the normal
+    Material material = GetColor(hit.materialID, sceneData, hit);
+
+
+    float3 waterCol   = GetColor(201, 218, 245);
     float3 grassColor = GetColor(68, 209, 63);
     float3 brickColor = GetColor(55, 50, 61);
 
@@ -109,5 +113,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
 
+    //todo add material that bends normal
     InOutHitNormalHasHit[id.xy] = float4(hit.normal, hit.hasHit);
 }

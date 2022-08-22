@@ -36,6 +36,9 @@ public class VoxelRayTracerTester : MonoBehaviour
     public LightDataComponent[] lightDataComponents;
     List<LightData> tempLightData = new List<LightData>();
 
+    ProgressiveVoxelRayTracerAPI progressiveRayTracer;
+    FixedVoxelRayTracerAPI fixedRayTracer;
+
     VoxelRayTracerAPI api;
 
     [Header("Exporter")]
@@ -53,20 +56,18 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     public void Init()
     {
-        if (useProgressiveRenderer)
-        {
-            api = new ProgressiveVoxelRayTracerAPI(progressiveCameraRayCalculator, progressiveRayCaster, progressiveCalculatePixelColor, progressiveRayBounce, progressiveRollingAverage);
-        }
-        else
-        {
-            api = new FixedVoxelRayTracerAPI(fixedVoxellRayTracerShader);
-        }
-        api.SetSettings(settings);
+        progressiveRayTracer = new ProgressiveVoxelRayTracerAPI(progressiveCameraRayCalculator, progressiveRayCaster, progressiveCalculatePixelColor, progressiveRayBounce, progressiveRollingAverage);
+        fixedRayTracer = new FixedVoxelRayTracerAPI(fixedVoxellRayTracerShader);
+
+        progressiveRayTracer.SetSettings(settings);
+        fixedRayTracer.SetSettings(settings);
+
         lightDataComponents = FindObjectsOfType<LightDataComponent>();
     }
 
     public RenderTexture RenderImage(float t)
     {
+        api = useProgressiveRenderer ? progressiveRayTracer : fixedRayTracer;
         api.SetRenderDebugMode(renderDebugMode);
 
         //Set Camera pos
@@ -126,14 +127,16 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     void OnDestroy()
     {
-        api.Dispose();
+        progressiveRayTracer.Dispose();
+        fixedRayTracer.Dispose();
     }
 
     private void OnValidate()
     {
         if (Application.isPlaying && api != null)
         {
-            api.SetSettings(settings);
+            progressiveRayTracer.SetSettings(settings);
+            fixedRayTracer.SetSettings(settings);
         }
     }
 
@@ -143,6 +146,8 @@ public class VoxelRayTracerTester : MonoBehaviour
     public void SavePicture()
     {
         Init();
+
+        api = useProgressiveRenderer ? progressiveRayTracer : fixedRayTracer;
         api.SetSettings(exporterSettings);
 
         SaveTexture(RenderImage(0), settings.resolution, "0");
@@ -162,6 +167,7 @@ public class VoxelRayTracerTester : MonoBehaviour
     {
         Init();
 
+        api = useProgressiveRenderer ? progressiveRayTracer : fixedRayTracer;
         api.SetSettings(exporterSettings);
 
         GetExportData(out float frameDuration, out int frameCount, out int frameNameMaxDigit);

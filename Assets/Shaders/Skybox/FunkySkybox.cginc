@@ -1,5 +1,8 @@
+
+
 #include "../Utils/MathUtils.cginc"
 #include "../Utils/NoiseUtils.cginc"
+
 
 float3 SampleGradient(float t)
 {
@@ -9,8 +12,11 @@ float3 SampleGradient(float t)
         GetColor(86, 167, 204),
         GetColor(179, 225, 232),
         GetColor(66, 214, 255),
-        GetColor(235, 214, 163),
-        GetColor(255, 163, 163),
+        //GetColor(235, 214, 163),
+
+        //GetColor(255, 163, 163),
+        GetColor(0, 0, 0),
+        GetColor(0, 0, 0),
         GetColor(95, 237, 194),   
         GetColor(29, 26, 176),
         GetColor(96, 63, 204)
@@ -37,7 +43,7 @@ float3 GetWeirdNoise(float2 uv, float t)
     return frac(y + x + noise1 - noise2 + t);
 }
 
-float3 SampleSimpleSkybox(float3 ro, float3 rd, float t)
+float3 SampleFunkySkybox(float3 ro, float3 rd, float t)
 {
     float pitch;
     float yaw;

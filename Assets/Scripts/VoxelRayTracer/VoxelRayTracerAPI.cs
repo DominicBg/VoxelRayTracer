@@ -38,15 +38,8 @@ public abstract class VoxelRayTracerAPI
 
     public unsafe VoxelRayTracerAPI()
     {
-       // shader = computeShader;
-        //kernelHandle = shader.FindKernel("CSMain");
-
-
         lightBuffer = new ListBuffer<LightData>("lightDatas", sizeof(LightData));
         fakeCubemap = new Cubemap(1, TextureFormat.Alpha8, false);
- 
-        //volumetricNoise = new RenderTexture(1, 1, 0);
-        //volumetricNoise.Create();
 
         cubemap = fakeCubemap;
         SetMediumettings();
@@ -61,8 +54,6 @@ public abstract class VoxelRayTracerAPI
             outputTexture.enableRandomWrite = true;
             outputTexture.Create();
         }
-    
-        //shader.SetTexture(kernelHandle, "Result", outputTexture);
     }
 
 
@@ -113,7 +104,6 @@ public abstract class VoxelRayTracerAPI
     {
         this.volumetricNoise = volumetricNoise;
         useVolumetricNoise = true;
-       //voxel3DSizes = new Vector3Int(voxelTexture3D.width, voxelTexture3D.height, voxelTexture3D.volumeDepth);
     }
 
     public void SetCubeMap(Cubemap cubemap)

@@ -18,7 +18,7 @@ float GetDist(float3 p, float3 n, float t)
     float2 center = 128/2;
     float d = distance(p.xz, center);
     float fadeoff = 1 - saturate(d/50);
-    return p.y + 0.05 * (sin(-t * 5 + d * 0.75) * 0.5 + 0.5) * fadeoff;
+    return p.y + 0.1 * (sin(-t * 5 + d * 0.75) * 0.5 + 0.5) * fadeoff;
     //return distance(p, samplePoint);
 }
 

@@ -5,7 +5,7 @@
 
 
 Texture3D<uint> voxel;
-uint3 iVoxelSizes;
+float4 iVoxelSizes;
 
 Texture2D<float4> InRayOrigin;
 Texture2D<float4> InRayDirection;
@@ -26,13 +26,13 @@ SceneData GetSceneData()
     settings.blurIterations = 0;
     settings.shadowIterations = 0;
     settings.volumetricLightSteps = 0;
-    settings.maxSteps = 250;
+    settings.maxSteps = length(iVoxelSizes) * 2;
 
     SceneData sceneData;
     sceneData.settings = settings;
     sceneData.voxel = voxel;
     sceneData.time = 0;
-    sceneData.voxelSizes = iVoxelSizes;
+    sceneData.voxelSizes = int3(iVoxelSizes.x, iVoxelSizes.y, iVoxelSizes.z);
 
 
     return sceneData;

@@ -38,22 +38,23 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     uint2 i = id.xy;
     RayHit hit = GetHit(i);
 
-    //Bounce differently based on the material
+    if(!hit.hasHit)
+    {
+        return;
+    }
 
     float diffuseCoef = GetDiffuseCoef(hit);
     float3 reflDir = reflect(hit.rd, hit.normal);
 
-
-
     if(diffuseCoef > 0)
     {
-        uint rngState = WangHash(frameCount + id.x * 61223  + id.y * 96737 );
+        uint rngState = WangHash(frameCount + id.x * 61223  + id.y * 96737);
         float3 diffuseDir = normalize(reflDir + RandomInSphere(rngState));
         float3 glossyDir = NextRandomDirection(reflDir, 0.1, rngState);
         reflDir = lerp(glossyDir, diffuseDir, diffuseCoef);
     }
 
-    float3 newHitPos = hit.pos + hit.normal * 0.01;
+    float3 newHitPos = hit.pos + hit.normal * 0.001;
     InOutRayOrigin[i] = float4(newHitPos, 1);
     InOutRayDirection[i] = float4(reflDir, 1);
 }
