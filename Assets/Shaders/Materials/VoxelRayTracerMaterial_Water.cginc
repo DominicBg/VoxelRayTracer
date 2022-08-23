@@ -35,19 +35,11 @@ float3 GetNormal(float3 p, float3 n, float t)
     return normalize(dir);
 }
 
-Material GetColorMaterial_Water(in SceneData sceneData, inout RayHit hit)
+float3 GetColorMaterial_Water(in SceneData sceneData, inout RayHit hit)
 {
-    Material material;
-    material.reflection = 0.9;
-    material.skyboxLight = 0.2;
-    material.blur = 0.01;
-
-
-    float3 col = float3(1,1,1);
+    float3 col = GetColor(163, 195, 247);
 
     hit.normal = GetNormal(hit.pos, hit.normal, sceneData.time);
     hit.reflDir = reflect(hit.rd, hit.normal);
-    material.color = BasicLight(sceneData, hit);
-
-    return material;
+    return col;
 }

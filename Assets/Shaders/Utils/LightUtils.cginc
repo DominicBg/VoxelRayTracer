@@ -126,7 +126,7 @@ float FadeOffIntensity(in LightData lightData, in RayHit hit)
     return FadeOffIntensity(lightData, hit.pos);
 }
 
-float3 BasicLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
+float3 CalculateLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
 {
     switch(lightData.type)
     {
@@ -153,12 +153,12 @@ float3 BasicLight(in LightData lightData, in RayHit hit, in SceneData sceneData)
     return 1;
 }
 
-float3 BasicLight(in SceneData sceneData, in RayHit hit)
+float3 CalculateLight(in SceneData sceneData, in RayHit hit)
 {
     float3 colSum = 0;
     for (uint i = 0; i < sceneData.lightDatas.Length; i++)
     {
-        colSum += BasicLight(sceneData.lightDatas[i], hit, sceneData);
+        colSum += CalculateLight(sceneData.lightDatas[i], hit, sceneData);
     }
     return saturate(colSum);
 }

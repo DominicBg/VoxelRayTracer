@@ -17,19 +17,16 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //pos = pos % 128;
 
     int3 center = 128/2;
+    uint waterLevel = 36;
 
-    float box = sdBoxFrame(id - float3(center.x, 128/2, center.z), 128/2, 1);
-    if(box < 0)
+    if(id.y < waterLevel && (id.x == 0 || id.x == 127 || id.z == 0 || id.z == 127))
     {
         Result[id] = 3;
         return;
     }
 
-    //float2 pos = id.xz;
-
     //Lamp
     uint lampHeight = 52;
-    //int3 center = 50;
 
     float lampPole = distance(pos.xz, center.xz);
     if(lampPole < 5 && id.y < lampHeight)
@@ -53,8 +50,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         return;
     }
 
-    uint waterLevel = 36;
-    float groundValue = waterLevel + 8 * fbm_4(pos.xz * 0.03);
+    float groundValue = waterLevel + 8 * fbm_4(4.6 + pos.xz * 0.03);
     groundValue = max(groundValue, waterLevel);
     if(pos.y < groundValue)
     {

@@ -14,6 +14,8 @@ RWTexture2D<float4> OutHitPositionDistance;
 RWTexture2D<float4> OutHitNormalHasHit; //normal = xyz, has hit = w
 RWTexture2D<uint> OutHitMaterialID;
 
+int reflectionCount;
+
 
 SceneData GetSceneData()
 {
@@ -44,10 +46,16 @@ SceneData GetSceneData()
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float3 ro = InRayOrigin[id.xy];
-    float3 rd = InRayDirection[id.xy];
+    //Prevent future raycast if the previous hit didn't hit
+    if(reflectionCount > 0 && !OutHitNormalHasHit[id.xy].w)
+    {
+        return;
+    }
 
-    RayHit hit = RayCast(ro, rd, GetSceneData());
+    float3 ro = InRayOrigin[id.xy].xyz;
+    float3 rd = InRayDirection[id.xy].xyz;
+
+    RayHit hit = RayCast(ro, rd, 1, GetSceneData());
 
     OutHitPositionDistance[id.xy] = float4(hit.pos, hit.dist);
     OutHitNormalHasHit[id.xy] = float4((hit.normal), hit.hasHit);

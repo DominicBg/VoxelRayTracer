@@ -30,7 +30,7 @@ float3 SampleGradient(float t)
     return lerp(cols[id1], cols[id2 % size], tt);    
 }
 
-float3 GetWeirdNoise(float2 uv, float t)
+float GetWeirdNoise(float2 uv, float t)
 { 
     t *= 0.05;
     float x = abs(0.5 - uv.x * 0.5) * 0.1;

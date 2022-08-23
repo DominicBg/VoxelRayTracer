@@ -68,21 +68,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     RayHit hit = GetRayHit(id.xy);
 
     //modify the normal
-    Material material = GetColor(hit.materialID, sceneData, hit);
-
-
-    float3 waterCol   = GetColor(201, 218, 245);
-    float3 grassColor = GetColor(68, 209, 63);
-    float3 brickColor = GetColor(55, 50, 61);
-
-    float3 col;
-    switch(hit.materialID)
-    {
-        case 1: col = waterCol; break;
-        case 2: col = grassColor; break;
-        case 3: col = brickColor; break;
-    }
-
+    float3 col = GetColor(sceneData, hit);
     float3 lightCol;
 
     if(!hit.hasHit)
@@ -92,18 +78,18 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
     else
     {
-        lightCol = BasicLight(sceneData, hit);
+        lightCol = CalculateLight(sceneData, hit);
     }
 
     if(reflectionCount == 0)
     {
         OutSurfaceColor[id.xy] = float4(col, 1);
-        OutFrameColor[id.xy] = float4(lightCol * OutSurfaceColor[id.xy], 1);
+        OutFrameColor[id.xy] = float4(lightCol * OutSurfaceColor[id.xy].xyz, 1);
     }
     else
     {
         OutSurfaceColor[id.xy] *= float4(col, 1);
-        OutFrameColor[id.xy] += float4(lightCol * OutSurfaceColor[id.xy], 1);
+        OutFrameColor[id.xy] += float4(lightCol * OutSurfaceColor[id.xy].xyz, 1);
     }
 
     //Prevent future reflection
@@ -113,6 +99,5 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
 
-    //todo add material that bends normal
     InOutHitNormalHasHit[id.xy] = float4(hit.normal, hit.hasHit);
 }

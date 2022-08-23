@@ -72,7 +72,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         Dispatch(cameraRayCalculator);
     }
 
-    void CastRays()
+    void CastRays(int reflectionCount)
     {
         SetOpaqueVoxelInShader(rayCaster);
 
@@ -82,6 +82,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         rayCaster.SetTexture(0, "OutHitPositionDistance", hitPositionDistance);
         rayCaster.SetTexture(0, "OutHitNormalHasHit", hitNormalHasHit);
         rayCaster.SetTexture(0, "OutHitMaterialID", hitMaterialID);
+        rayCaster.SetInt("reflectionCount", reflectionCount);
 
         Dispatch(rayCaster);
     }
@@ -158,7 +159,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 
         for (int i = 0; i < settings.reflectionCount; i++)
         {
-            CastRays();
+            CastRays(i);
             CalculateFrameColors(i);
             CalculateVolumetricLight();
 

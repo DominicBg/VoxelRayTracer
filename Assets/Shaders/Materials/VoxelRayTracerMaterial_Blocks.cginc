@@ -1,13 +1,8 @@
 #include "VoxelRayTracerDatas.cginc"
 
 
-Material GetColorMaterial_Blocks(in SceneData sceneData, inout RayHit hit)
+float3 GetColorMaterial_Blocks(in SceneData sceneData, inout RayHit hit)
 {
-    Material material;
-    material.reflection = 0.0;
-    material.blur = 0;
-    material.skyboxLight = 0.1;
-
     uint state = WangHash(hit.cell.x * 11 + hit.cell.y * 13 + hit.cell.z * 17);
     float hue = NextFloat(0, 1, state);
     hue = frac(hue);
@@ -17,7 +12,5 @@ Material GetColorMaterial_Blocks(in SceneData sceneData, inout RayHit hit)
     {
         col *= 0.8;
     }
-
-    material.color = col * BasicLight(sceneData, hit);
-    return material;
+    return col;
 }

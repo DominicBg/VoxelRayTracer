@@ -88,11 +88,11 @@ bool3 lessThanEqual(float3 a, float3 b)
     return bool3(a <= b);
 }
 
-RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
+RayHit RayCast(float3 ro, float3 rd, int reflectionCount, in SceneData sceneData)
 {
     //Optim to start the ray at the voxel structure
     float skippedDist = 0;
-    if (any(ro <= 0) || any(ro >= sceneData.voxelSizes))
+    if (reflectionCount == 0 && any(ro <= 0) || any(ro >= sceneData.voxelSizes))
     {
         BoxIntersectionResult voxelMapIntersection = BoxIntersection(0, sceneData.voxelSizes, ro, rd);
         if (!voxelMapIntersection.hasHit)
@@ -100,6 +100,7 @@ RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
             RayHit hit;
             hit.ro = ro;
             hit.rd = rd;
+            hit.materialID = 0;
             hit.hasHit = false;
             return hit;
         }
@@ -145,6 +146,11 @@ RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
     }
 
     return CalculateRayHit(ro, rd, mapPos, mask, skippedDist, voxel);
+}
+
+RayHit RayCast(float3 ro, float3 rd, in SceneData sceneData)
+{
+    return RayCast(ro, rd, 0, sceneData);
 }
 
 #endif
