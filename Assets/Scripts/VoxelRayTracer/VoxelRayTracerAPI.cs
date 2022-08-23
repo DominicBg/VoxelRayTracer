@@ -213,6 +213,11 @@ public abstract class VoxelRayTracerAPI
         shader.SetVector("iVoxelSizes", new Vector4(voxel3DSizes.x, voxel3DSizes.y, voxel3DSizes.z, 0));
     }
 
+    protected void SetVolumetricNoise(ComputeShader shader, int kernelHandle = 0)
+    {
+        shader.SetTexture(kernelHandle, "volumetricNoise", volumetricNoise);
+        shader.SetBool("iUseVolumetricNoise", useVolumetricNoise);
+    }
 }
 
 [System.Serializable]

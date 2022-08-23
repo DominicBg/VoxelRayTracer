@@ -6,6 +6,8 @@
 
 
 Texture3D<uint> voxel;
+Texture3D<float> volumetricNoise;
+
 StructuredBuffer<LightData> lightDatas;
 float4 iVoxelSizes;
 
@@ -27,17 +29,17 @@ SceneData GetSceneData(uint2 id)
     Settings settings;
     settings.blurIterations = 0;
     settings.shadowIterations = 0;
-    settings.volumetricLightSteps = 0;
+    settings.volumetricLightSteps = 10;
     settings.maxSteps = length(iVoxelSizes) * 2;
-
 
     SceneData sceneData;
     sceneData.settings = settings;
     sceneData.voxel = voxel;
-    sceneData.time = 52.4;
+    sceneData.volumetricNoise = volumetricNoise;
+    sceneData.time = 6.;
     sceneData.voxelSizes = int3(iVoxelSizes.x, iVoxelSizes.y, iVoxelSizes.z); //test weird
     sceneData.lightDatas = lightDatas;
-    sceneData.seed = WangHash(frameCount + id.x * 61223  + id.y * 96737);
+    sceneData.seed = WangHash(frameCount) + id.x * 23  + id.y * 97;
 
     return sceneData;
 }
@@ -80,6 +82,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     {
         lightCol = CalculateLight(sceneData, hit);
     }
+
+    col += CalculateMonteCarloVolumetricLight(hit.ro, hit.rd, hit.dist, sceneData);
 
     if(reflectionCount == 0)
     {

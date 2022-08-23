@@ -408,7 +408,7 @@ MonoBehaviour:
   renderDebugMode: 0
   useFreeCamera: 1
   useOrthoCamera: 0
-  useProgressiveRenderer: 1
+  useProgressiveRenderer: 0
   settings:
     reflectionCount: 3
     blurIteration: 0

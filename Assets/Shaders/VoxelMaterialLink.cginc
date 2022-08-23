@@ -8,8 +8,8 @@
 #include "Materials/VoxelRayTracerMaterial2.cginc"
 #include "Materials/VoxelRayTracerMaterial_Blocks.cginc"
 
-//#include "Skybox/SimpleSkybox.cginc"
-#include "Skybox/FunkySkybox.cginc"
+#include "Skybox/SimpleSkybox.cginc"
+//#include "Skybox/FunkySkybox.cginc"
 
 
 float3 GetColor(in SceneData sceneData, inout RayHit hit)
@@ -70,7 +70,7 @@ float GetDiffuseCoef(in RayHit hit)
 
 float3 SampleSkybox(in SceneData sceneData, in RayHit hit)
 {
-    return SampleFunkySkybox(hit.ro, hit.rd, sceneData.time);
+    return SampleSimpleSkybox(hit.ro, hit.rd, sceneData.time);
 }
 
 #endif

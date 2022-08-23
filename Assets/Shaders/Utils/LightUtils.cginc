@@ -216,13 +216,12 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, in LightData lightData, fl
         }
         float l = sqrt(lightToPosRadiusSq);
 
-        //TODO do like soft shadow and raycast around the lightPos
         RayHit hit = RayCast(p, d / l, sceneData);
         if (!hit.hasHit || l < hit.dist)
         {
             float vNoise = SampleVolumetricNoise(p * 0.05 + sceneData.time * 0.05, sceneData.volumetricNoise);
-            //float fadeOff = FadeOffIntensity(lightData, p);
-            lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * vNoise;
+            float fadeOff = FadeOffIntensity(lightData, p);
+            lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * vNoise * fadeOff;
             //todo try this shit *= exp(-cloud * dStep);
 
         }
@@ -238,6 +237,77 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, float maxDist, in SceneDat
         if (sceneData.lightDatas[i].type == LIGHT_TYPE_POINT && sceneData.lightDatas[i].volumetricIntensity > 0 && sceneData.lightDatas[i].intensity > 0)
         {
             volumetricLightSum += CalculateVolumetricLight(ro, rd, sceneData.lightDatas[i], maxDist, sceneData);
+        }
+    }
+    return saturate(volumetricLightSum);
+}
+
+float4 CalculateMonteCarloVolumetricLight(float3 ro, float3 rd, in LightData lightData, float maxDist, in SceneData sceneData)
+{
+    float startDist, endDist;
+
+    uint rngState = sceneData.seed;
+    float3 roOffset = RandomInSphere(rngState) * lightData.penumbraRadius;
+    ro += roOffset;
+
+    if (!RaySphereIntersection(ro, rd, lightData.position, lightData.radius, startDist, endDist))
+    {
+        //The ray doesn't intersect with the light radius, just skip
+        return 0;
+    }
+
+    //Will be 0 if the ray starts inside
+    startDist = max(startDist, 0);
+
+    int steps = sceneData.settings.volumetricLightSteps;
+    float dx = lightData.radius / float(steps);
+    
+    float vIntensity = lightData.volumetricIntensity;
+    float4 lightSum = 0.;
+
+
+    [loop]
+    for (int i = 0; i < steps; i++)
+    {
+        float offset = NextFloat(0, dx, rngState);
+        float currentDist = startDist + float(i) * dx + offset;
+        
+        if (currentDist > maxDist || currentDist > endDist) break;
+        //if (currentDist > maxDist) break;
+        
+        float3 p = ro + rd * currentDist;
+        p += lightData.penumbraRadius * RandomInSphere(rngState);
+
+        float3 d = lightData.position - p;
+        float lightToPosRadiusSq = dot(d, d);
+
+        if (lightToPosRadiusSq > lightData.radius * lightData.radius)
+        {
+            continue;
+        }
+        float l = sqrt(lightToPosRadiusSq);
+
+        RayHit hit = RayCast(p, d / l, sceneData);
+        if (!hit.hasHit || l < hit.dist)
+        {
+            float vNoise = SampleVolumetricNoise(p * 0.5 + sceneData.time * 0.05, sceneData.volumetricNoise);
+            float fadeOff = FadeOffIntensity(lightData, p);
+            lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * vNoise * fadeOff;
+            //todo try this shit *= exp(-cloud * dStep);
+
+        }
+    }
+    return lightSum;
+}
+
+float4 CalculateMonteCarloVolumetricLight(float3 ro, float3 rd, float maxDist, in SceneData sceneData)
+{
+    float4 volumetricLightSum = 0;
+    for (uint i = 0; i < sceneData.lightDatas.Length; i++)
+    {
+        if (sceneData.lightDatas[i].type == LIGHT_TYPE_POINT && sceneData.lightDatas[i].volumetricIntensity > 0 && sceneData.lightDatas[i].intensity > 0)
+        {
+            volumetricLightSum += CalculateMonteCarloVolumetricLight(ro, rd, sceneData.lightDatas[i], maxDist, sceneData);
         }
     }
     return saturate(volumetricLightSum);

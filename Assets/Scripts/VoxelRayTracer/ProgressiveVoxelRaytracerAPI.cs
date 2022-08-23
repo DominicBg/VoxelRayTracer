@@ -91,6 +91,9 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
     {
         SetOpaqueVoxelInShader(calculatePixelColor);
         SetResolutionParameterInShader(calculatePixelColor);
+        SetVolumetricNoise(calculatePixelColor);
+
+        lightBuffer.UpdateData(0, calculatePixelColor);
 
         calculatePixelColor.SetTexture(0, "InRayOrigin", rayOrigin);
         calculatePixelColor.SetTexture(0, "InRayDirection", rayDirection);
@@ -105,14 +108,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         calculatePixelColor.SetInt("frameCount", frameCount); //used for seed
         calculatePixelColor.SetInt("reflectionCount", reflectionCount);
 
-        lightBuffer.UpdateData(0, calculatePixelColor);
-
         Dispatch(calculatePixelColor);
-    }
-
-    void CalculateVolumetricLight()
-    {
-        //Calculate lowrez volumetric light and gaussian blur
     }
 
     void CalculateRayBounces()
@@ -161,7 +157,6 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         {
             CastRays(i);
             CalculateFrameColors(i);
-            CalculateVolumetricLight();
 
             if (i != settings.reflectionCount - 1)
             {

@@ -36,9 +36,7 @@ public class FixedVoxelRayTracerAPI : VoxelRayTracerAPI
             shader.SetVector("iVoxelTransparentSizes", new Vector4(voxelTransparent3DSizes.x, voxelTransparent3DSizes.y, voxelTransparent3DSizes.z, 0));
         }
 
-        //Volumetric Noise
-        shader.SetTexture(kernelHandle, "volumetricNoise", volumetricNoise);
-        shader.SetBool("iUseVolumetricNoise", useVolumetricNoise);
+        SetVolumetricNoise(shader, kernelHandle);
 
 
         //We multiply by two because we have a buffer if some ray hits does perfeclty 2 steps by diagonals 
