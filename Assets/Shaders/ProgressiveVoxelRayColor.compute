@@ -83,6 +83,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         lightCol = CalculateLight(sceneData, hit);
     }
 
+    if(!hit.hasHit)
+    {
+        hit.dist = 999999;
+    }
     col += CalculateMonteCarloVolumetricLight(hit.ro, hit.rd, hit.dist, sceneData);
 
     if(reflectionCount == 0)

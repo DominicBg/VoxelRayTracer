@@ -244,7 +244,7 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, float maxDist, in SceneDat
 
 float4 CalculateMonteCarloVolumetricLight(float3 ro, float3 rd, in LightData lightData, float maxDist, in SceneData sceneData)
 {
-    float startDist, endDist;
+    float startDist = 0, endDist = 0;
 
     uint rngState = sceneData.seed;
     float3 roOffset = RandomInSphere(rngState) * lightData.penumbraRadius;
@@ -265,7 +265,6 @@ float4 CalculateMonteCarloVolumetricLight(float3 ro, float3 rd, in LightData lig
     float vIntensity = lightData.volumetricIntensity;
     float4 lightSum = 0.;
 
-
     [loop]
     for (int i = 0; i < steps; i++)
     {
@@ -273,7 +272,6 @@ float4 CalculateMonteCarloVolumetricLight(float3 ro, float3 rd, in LightData lig
         float currentDist = startDist + float(i) * dx + offset;
         
         if (currentDist > maxDist || currentDist > endDist) break;
-        //if (currentDist > maxDist) break;
         
         float3 p = ro + rd * currentDist;
         p += lightData.penumbraRadius * RandomInSphere(rngState);
@@ -292,7 +290,7 @@ float4 CalculateMonteCarloVolumetricLight(float3 ro, float3 rd, in LightData lig
         {
             float vNoise = SampleVolumetricNoise(p * 0.5 + sceneData.time * 0.05, sceneData.volumetricNoise);
             float fadeOff = FadeOffIntensity(lightData, p);
-            lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * vNoise * fadeOff;
+            lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * fadeOff * vNoise;
             //todo try this shit *= exp(-cloud * dStep);
 
         }
