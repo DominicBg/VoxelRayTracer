@@ -250,14 +250,14 @@ float NextFloat(float xmin, float xmax, inout uint state)
     return lerp(xmin, xmax, t);
 }
 
-float2 Nextfloat2(float2 rmin, float2 rmax, inout uint state)
+float2 NextFloat2(float2 rmin, float2 rmax, inout uint state)
 {
     float x = NextFloat(rmin.x, rmax.x, state);
     float y = NextFloat(rmin.y, rmax.y, state);
     return float2(x, y);
 }
 
-float3 Nextfloat3(float3 rmin, float3 rmax, inout uint state)
+float3 NextFloat3(float3 rmin, float3 rmax, inout uint state)
 {
     float x = NextFloat(rmin.x, rmax.x, state);
     float y = NextFloat(rmin.y, rmax.y, state);

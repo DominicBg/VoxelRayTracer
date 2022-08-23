@@ -2,6 +2,7 @@
 #pragma kernel CSMain
 
 #include "Utils/CameraUtils.cginc"
+#include "Utils/MathUtils.cginc"
 #include "VoxelRayTracerDatas.cginc"
 
 float2 iResolution;
@@ -20,10 +21,16 @@ float4x4 iCameraInverseProjection;
 RWTexture2D<float4> OutRayOrigin;
 RWTexture2D<float4> OutRayDirection;
 
+int frameCount;
+float dofBlurAmount;
+float dofFocalLength;
+
 [numthreads(8, 8, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    float2 uv = (float2(id.xy) / iResolution.xy) * 2.0 - 1.0;
+    uint rngState = WangHash(frameCount + 25);
+    float2 antiAliasing = NextFloat2(0, 1, rngState);
+    float2 uv = (float2(id.xy + antiAliasing) / iResolution.xy) * 2.0 - 1.0;
     float3 ro, rd;
 
     if (iUseFreeCamera)
@@ -42,6 +49,19 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     {
         CreateCameraRay(uv, iCameraToWorld, iCameraInverseProjection, ro, rd);
     }
+
+    if(dofBlurAmount != 0)
+    {
+        //https://medium.com/@elope139/depth-of-field-in-path-tracing-e61180417027#:~:text=Implementing%20depth%20of%20field%20in,out%20of%20focus%20will%20appear.
+        float2 blur = dofBlurAmount * NextFloat2(-1, 1, rngState);
+        float3 focalPoint = ro + rd * dofFocalLength;
+
+        float3 right = qmul(iCameraRot, float3(1, 0, 0));
+        float3 up = qmul(iCameraRot, float3(0, 1, 0));
+        ro += blur.x * right + blur.y * up;
+        rd = normalize(focalPoint - ro);
+    }
+
 
     OutRayOrigin[id.xy] = float4(ro, 1);
     OutRayDirection[id.xy] = float4(rd, 1);

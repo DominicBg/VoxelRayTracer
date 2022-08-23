@@ -26,8 +26,17 @@ public class VoxelRayTracerTester : MonoBehaviour
     public Cubemap cubemap;
     public Camera mainCamera;
     public RenderDebugMode renderDebugMode;
+
+    [Header("Camera")]
     public bool useFreeCamera;
     public bool useOrthoCamera;
+
+    [Header("Depth Of Field")]
+    public float depthOfFieldBlurAmount;
+    public float depthOfFieldFocalLength;
+    public bool depthOfFieldShouldFocusVoxel;
+    public Vector3Int depthOfFieldFocusVoxel;
+
 
     public bool useProgressiveRenderer;
 
@@ -91,6 +100,14 @@ public class VoxelRayTracerTester : MonoBehaviour
             api.SetCameraFOV(mainCamera.fieldOfView);
         }
 
+        if(depthOfFieldShouldFocusVoxel)
+        {
+            api.SetCameraDepthOfFieldForVoxelPosition(depthOfFieldFocusVoxel, depthOfFieldBlurAmount);
+        }
+        else
+        {
+            api.SetCameraDepthOfField(depthOfFieldFocalLength, depthOfFieldBlurAmount);
+        }
 
         //Create geometry
         var voxel = voxelGenerator.GenerateWithParameters(t);
@@ -135,8 +152,8 @@ public class VoxelRayTracerTester : MonoBehaviour
     {
         if (Application.isPlaying && api != null)
         {
-            progressiveRayTracer.SetSettings(settings);
-            fixedRayTracer.SetSettings(settings);
+            api.SetSettings(settings);
+            api.OnParameterChanged();
         }
     }
 

@@ -30,6 +30,9 @@ public abstract class VoxelRayTracerAPI
     protected Vector3 cameraPos;
     protected Quaternion cameraRot;
     protected float fov = 60;
+    protected float depthOfFieldBlurAmount = 0;
+    protected float depthOfFieldFocalLength = 0;
+
 
     //Unity camera Mode
     protected Camera mainCamera;
@@ -75,6 +78,18 @@ public abstract class VoxelRayTracerAPI
     public void SetCameraFOV(float fov)
     {
         this.fov = fov;
+    }
+
+    public void SetCameraDepthOfField(float focalLength, float blurAmount)
+    {
+        depthOfFieldBlurAmount = blurAmount;
+        depthOfFieldFocalLength = focalLength;
+    }
+
+    public void SetCameraDepthOfFieldForVoxelPosition(Vector3Int voxelPosition, float blurAmount)
+    {
+        depthOfFieldBlurAmount = blurAmount;
+        depthOfFieldFocalLength = Vector3.Distance(CenterAtZero(cameraPos), voxelPosition);
     }
 
     public void SetCameraOrtho()
@@ -218,6 +233,8 @@ public abstract class VoxelRayTracerAPI
         shader.SetTexture(kernelHandle, "volumetricNoise", volumetricNoise);
         shader.SetBool("iUseVolumetricNoise", useVolumetricNoise);
     }
+
+    public virtual void OnParameterChanged() { }
 }
 
 [System.Serializable]

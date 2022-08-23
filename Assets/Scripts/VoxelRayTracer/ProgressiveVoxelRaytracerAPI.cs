@@ -34,6 +34,11 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         this.rollingAverage = rollingAverage;
     }
 
+    public override void OnParameterChanged()
+    {
+        base.OnParameterChanged();
+        frameCount = 0;
+    }
 
     void EnsureTextures()
     {
@@ -68,6 +73,12 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 
         cameraRayCalculator.SetTexture(0, "OutRayOrigin", rayOrigin);
         cameraRayCalculator.SetTexture(0, "OutRayDirection", rayDirection);
+
+        cameraRayCalculator.SetInt("frameCount", frameCount); //used for seed
+
+        cameraRayCalculator.SetFloat("dofFocalLength", depthOfFieldFocalLength);
+        cameraRayCalculator.SetFloat("dofBlurAmount", depthOfFieldBlurAmount);
+
 
         Dispatch(cameraRayCalculator);
     }

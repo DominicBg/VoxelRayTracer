@@ -219,7 +219,7 @@ float4 CalculateVolumetricLight(float3 ro, float3 rd, in LightData lightData, fl
         RayHit hit = RayCast(p, d / l, sceneData);
         if (!hit.hasHit || l < hit.dist)
         {
-            float vNoise = SampleVolumetricNoise(p * 0.05 + sceneData.time * 0.05, sceneData.volumetricNoise);
+            float vNoise = SampleVolumetricNoise(p + sceneData.time * 0.05, sceneData.volumetricNoise);
             float fadeOff = FadeOffIntensity(lightData, p);
             lightSum += float4(lightData.color, 1) * lightData.intensity * vIntensity * dx * vNoise * fadeOff;
             //todo try this shit *= exp(-cloud * dStep);

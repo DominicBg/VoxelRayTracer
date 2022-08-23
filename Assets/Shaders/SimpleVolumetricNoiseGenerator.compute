@@ -7,5 +7,5 @@ RWTexture3D<float> Result;
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     uint rngState = GenerateRngState(id);
-    Result[id] = NextFloat(0.5, 1, rngState);
+    Result[id] = NextFloat(0., 1, rngState);
 }
