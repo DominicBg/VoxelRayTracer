@@ -50,11 +50,11 @@ RayHit GetRayHit(uint2 i)
     hit.ro = InRayOrigin[i].xyz;
     hit.rd = InRayDirection[i].xyz;
     hit.dist = InHitPositionDistance[i].w;
+    hit.pos = InHitPositionDistance[i].xyz;
     hit.materialID = InHitMaterialID[i];
     hit.normal = InOutHitNormalHasHit[i].xyz;
     hit.hasHit = InOutHitNormalHasHit[i].w;
 
-    hit.pos = hit.ro + hit.rd * hit.dist;
     hit.cell = uint3(hit.pos - hit.normal * 0.1);
     hit.reflDir = reflect(hit.rd, hit.normal);
 
@@ -71,6 +71,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     //modify the normal
     float3 col = GetColor(sceneData, hit);
+
+
     float3 lightCol;
 
     if(!hit.hasHit)

@@ -33,9 +33,8 @@ SceneData GetSceneData()
     SceneData sceneData;
     sceneData.settings = settings;
     sceneData.voxel = voxel;
-    sceneData.time = 0;
+    sceneData.time = 0.5;
     sceneData.voxelSizes = int3(iVoxelSizes.x, iVoxelSizes.y, iVoxelSizes.z);
-
 
     return sceneData;
     //sceneData.lightDatas = lightDatas;

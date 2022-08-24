@@ -11,7 +11,7 @@ float3 GetColorMaterial_Grass(in SceneData sceneData, inout RayHit hit)
 
     float3 col = 0;
     
-    uint rngState = GenerateRngState(hit.cell + subdivision * 4, 55);
+    uint rngState = GenerateRngState(hit.cell + 128 + subdivision * 4, 55);
     float randomValue = NextFloat(0, 1, rngState);
     if (randomValue > 0.7)
     {

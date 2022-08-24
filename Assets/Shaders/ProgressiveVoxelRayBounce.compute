@@ -17,13 +17,13 @@ RayHit GetHit(uint2 i)
     RayHit hit;
     hit.ro = InOutRayOrigin[i].xyz;
     hit.rd = InOutRayDirection[i].xyz;
+    hit.pos = InHitPositionDistance[i].xyz;
     hit.dist = InHitPositionDistance[i].w;
     hit.materialID = InHitMaterialID[i];
     hit.normal = InHitNormal[i].xyz;
     hit.hasHit = InHitNormal[i].w;
 
-    hit.pos = hit.ro + hit.rd * hit.dist;
-    hit.cell = uint3(hit.pos - hit.normal * 0.1);
+    hit.cell = uint3(hit.pos - hit.normal * 0.01);
     hit.reflDir = reflect(hit.rd, hit.normal);
 
     hit.uv = 0; // lol
