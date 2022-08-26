@@ -22,7 +22,7 @@ RWTexture2D<float4> OutSurfaceColor;
 RWTexture2D<float4> OutFrameColor;
 int frameCount;
 int reflectionCount;
-
+float time;
 
 SceneData GetSceneData(uint2 id)
 {
@@ -36,10 +36,10 @@ SceneData GetSceneData(uint2 id)
     sceneData.settings = settings;
     sceneData.voxel = voxel;
     sceneData.volumetricNoise = volumetricNoise;
-    sceneData.time = 6.;
+    sceneData.time = time;
     sceneData.voxelSizes = int3(iVoxelSizes.x, iVoxelSizes.y, iVoxelSizes.z); //test weird
     sceneData.lightDatas = lightDatas;
-    sceneData.seed = WangHash(frameCount) + id.x * 23  + id.y * 97;
+    sceneData.seed = WangHash(frameCount) + WangHash(id.x) +  WangHash(id.y);
 
     return sceneData;
 }
@@ -58,7 +58,7 @@ RayHit GetRayHit(uint2 i)
     hit.cell = uint3(hit.pos - hit.normal * 0.1);
     hit.reflDir = reflect(hit.rd, hit.normal);
 
-    hit.uv = 0; // lol
+    hit.uv = GetUV(hit);
     hit.dist2 = 0; //lol
     return hit;
 }
@@ -71,8 +71,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     //modify the normal
     float3 col = GetColor(sceneData, hit);
-
-
+   // float3 col = float3(hit.uv.x, hit.uv.y, 0);
+    //float3 col = float3(hit.cell / 128.);
     float3 lightCol;
 
     if(!hit.hasHit)
@@ -82,7 +82,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
     else
     {
-        lightCol = CalculateLight(sceneData, hit);
+        lightCol = CalculateLight(sceneData, hit); // * CalculateOcclusion(sceneData, hit);
+
+        //Add voxel light
+        uint lightMaterialID = 4;
+        float maxRange = 6;
+        float intensity = 0.7;
+        lightCol += CalculateVoxelLight(sceneData, hit, intensity, maxRange, lightMaterialID, GetColor(140, 102, 255));
     }
 
     if(!hit.hasHit)

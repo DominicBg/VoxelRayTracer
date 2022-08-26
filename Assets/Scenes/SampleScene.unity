@@ -223,7 +223,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &681930569
+--- !u!1 &495674022
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -231,22 +231,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 681930571}
-  - component: {fileID: 681930570}
+  - component: {fileID: 495674024}
+  - component: {fileID: 495674023}
   m_Layer: 0
-  m_Name: Point Light (4)
+  m_Name: Point Light (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &681930570
+--- !u!114 &495674023
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 681930569}
+  m_GameObject: {fileID: 495674022}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cb5751273a12fcf459e8f4db3dfddcef, type: 3}
@@ -254,19 +254,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lightType: 1
   color: {r: 1, g: 0.9352594, b: 0.82452834, a: 1}
-  intensity: 0.2
-  radius: 255
+  intensity: 0.5
+  radius: 100
   penumbraRadius: 1
-  volumetricIntensity: 0.05
---- !u!4 &681930571
+  volumetricIntensity: 0.02
+--- !u!4 &495674024
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 681930569}
+  m_GameObject: {fileID: 495674022}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 60.5, z: 0}
+  m_LocalPosition: {x: 0, y: 55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -463,6 +463,7 @@ MonoBehaviour:
   depthOfFieldShouldFocusVoxel: 1
   depthOfFieldFocusVoxel: {x: 64, y: 64, z: 64}
   useProgressiveRenderer: 1
+  rayPerFrame: 1
   settings:
     reflectionCount: 3
     blurIteration: 0
@@ -470,19 +471,20 @@ MonoBehaviour:
     volumetricLightSteps: 0
     resolution: {x: 800, y: 600}
   lightDataComponents:
+  - {fileID: 495674023}
   - {fileID: 439087721}
-  - {fileID: 0}
+  - {fileID: 978704956}
   - {fileID: 1991350028}
   exportFolder: Renders
   exporterStartTime: 0
-  exporterEndTime: 10
+  exporterEndTime: 5
   exporterFPS: 30
   exporterSettings:
     reflectionCount: 5
     blurIteration: 0
     shadowIteration: 5
-    volumetricLightSteps: 2000
-    resolution: {x: 1920, y: 1080}
+    volumetricLightSteps: 0
+    resolution: {x: 800, y: 600}
 --- !u!4 &870940649
 Transform:
   m_ObjectHideFlags: 0
@@ -616,6 +618,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 733bfca8e6438a442803c98bd9c07f38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  updateTime: 0
+  t: 0
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -890,7 +894,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lightType: 0
   color: {r: 1, g: 0.9655885, b: 0.7773585, a: 1}
-  intensity: 0.2
+  intensity: 0
   radius: 25
   penumbraRadius: 1
   volumetricIntensity: 0

@@ -23,21 +23,21 @@ public class FlyCamera : MonoBehaviour
 
     void Update()
     {
-        lastMouse = Input.mousePosition - lastMouse;
-        lastMouse = new Vector3(-lastMouse.y * camSens, lastMouse.x * camSens, 0);
-        lastMouse = new Vector3(transform.eulerAngles.x + lastMouse.x, transform.eulerAngles.y + lastMouse.y, 0);
-        
-        if(Input.GetMouseButton(1))
+
+        if (Input.GetMouseButton(1))
         {
+            lastMouse = Input.mousePosition - lastMouse;
+
+            lastMouse = new Vector3(-lastMouse.y * camSens, lastMouse.x * camSens, 0);
+            lastMouse = new Vector3(transform.eulerAngles.x + lastMouse.x, transform.eulerAngles.y + lastMouse.y, 0);
             transform.eulerAngles = lastMouse;
         }
 
+            lastMouse = Input.mousePosition;
 
-        lastMouse = Input.mousePosition;
         //Mouse  camera angle done.  
 
         //Keyboard commands
-        float f = 0.0f;
         Vector3 p = GetBaseInput();
         if (p.sqrMagnitude > 0)
         { // only move while a direction key is pressed

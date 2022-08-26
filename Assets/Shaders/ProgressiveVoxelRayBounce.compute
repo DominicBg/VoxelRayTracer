@@ -50,7 +50,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     {
         uint rngState = WangHash(frameCount + id.x * 61223  + id.y * 96737);
         float3 diffuseDir = normalize(reflDir + RandomInSphere(rngState));
-        float3 glossyDir = NextRandomDirection(reflDir, 0.1, rngState);
+        float3 glossyDir = NextRandomDirection(reflDir, 0.0002, rngState);
         reflDir = lerp(glossyDir, diffuseDir, diffuseCoef);
     }
 

@@ -22,8 +22,11 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
     RenderTexture frameColor;
 
     int frameCount;
+    float previousT;
     Vector3 previousCamPos;
     Quaternion previousCamRot;
+
+    public int rayPerFrame = 1;
 
     public ProgressiveVoxelRayTracerAPI(ComputeShader cameraRayCalculator, ComputeShader rayCaster, ComputeShader calculatePixelColor, ComputeShader bounceRay, ComputeShader rollingAverage) : base()
     {
@@ -98,7 +101,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         Dispatch(rayCaster);
     }
 
-    void CalculateFrameColors(int reflectionCount)
+    void CalculateFrameColors(float t, int reflectionCount)
     {
         SetOpaqueVoxelInShader(calculatePixelColor);
         SetResolutionParameterInShader(calculatePixelColor);
@@ -118,6 +121,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 
         calculatePixelColor.SetInt("frameCount", frameCount); //used for seed
         calculatePixelColor.SetInt("reflectionCount", reflectionCount);
+        calculatePixelColor.SetFloat("time", t);
 
         Dispatch(calculatePixelColor);
     }
@@ -154,29 +158,34 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 
     public override RenderTexture RenderToTexture(float t)
     {
-        if(previousCamPos != cameraPos || previousCamRot != cameraRot || Input.GetKey(KeyCode.Space))
+        if(previousCamPos != cameraPos || previousCamRot != cameraRot || t != previousT || Input.GetKey(KeyCode.Space))
         {
             frameCount = 0;
             previousCamPos = cameraPos;
             previousCamRot = cameraRot;
+            previousT = t;
         }
 
         EnsureTextures();
-        PrepareFirstRays();
 
-        for (int i = 0; i < settings.reflectionCount; i++)
+        for (int i = 0; i < rayPerFrame; i++)
         {
-            CastRays(i);
-            CalculateFrameColors(i);
+            PrepareFirstRays();
 
-            if (i != settings.reflectionCount - 1)
+            for (int j = 0; j < settings.reflectionCount; j++)
             {
-                CalculateRayBounces();
-            }
-        }
+                CastRays(j);
+                CalculateFrameColors(t, j);
 
-        ComputeRollingAverage();
-        frameCount++;
+                if (j != settings.reflectionCount - 1)
+                {
+                    CalculateRayBounces();
+                }
+            }
+
+            ComputeRollingAverage();
+            frameCount++;
+        }
 
         return outputTexture;
     }

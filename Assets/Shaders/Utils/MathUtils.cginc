@@ -11,6 +11,7 @@ bool DirectionToPitchYaw(float3 dir, out float pitch, out float yaw)
     return true;
     // pitch = asin(V.y / length(V));
     // yaw = asin( V.x / (cos(pitch)*length(V)) ); //Beware cos(pitch)==0, catch this exception!
+
 }
 
 // All components are in the range [0…1], including hue.
@@ -37,7 +38,7 @@ float3 cos3(float3 v)
 
 float3 ColorPalette(float t, float3 a, float3 b, float3 c, float3 d)
 {
-    return a + b * cos3(TAU*(c*t + d));
+    return a + b * cos3(TAU * (c * t + d));
 }
 
 // All components are in the range [0…1], including hue.
@@ -50,7 +51,7 @@ float3 hsv2rgb(float3 c)
 
 float Luminance(float3 col)
 {
-    return col.r * 0.2126 + col.g * 0.7152 + col.b * 0.0722; 
+    return col.r * 0.2126 + col.g * 0.7152 + col.b * 0.0722;
 }
 
 float3 ShittyRandom(float x)
@@ -59,10 +60,11 @@ float3 ShittyRandom(float x)
 }
 
 
-float2 rotate2d(float2 v, float a) {
-	float sinA = sin(a);
-	float cosA = cos(a);
-	return float2(v.x * cosA - v.y * sinA, v.y * cosA + v.x * sinA);	
+float2 rotate2d(float2 v, float a)
+{
+    float sinA = sin(a);
+    float cosA = cos(a);
+    return float2(v.x * cosA - v.y * sinA, v.y * cosA + v.x * sinA);
 }
 
 float distancesq(float2 x, float2 y)
@@ -100,10 +102,10 @@ float Remap(float fromMin, float fromMax, float toMin, float toMax, float x)
     return lerp(toMin, toMax, t);
 }
 
-float gain(float x, float k) 
+float gain(float x, float k)
 {
-    float a = 0.5*pow(2.0*((x<0.5)?x:1.0-x), k);
-    return (x<0.5)?a:1.0-a;
+    float a = 0.5 * pow(2.0 * ((x < 0.5) ? x : 1.0 - x), k);
+    return (x < 0.5) ? a : 1.0 - a;
 }
 
 //Easings
@@ -176,17 +178,17 @@ float3 qmul(float4 r, float3 v)
 
 float4 qAxisAngleRotation(float3 axis, float angle)
 {
-	axis = normalize(axis);
-	float s,c;
-	s = sin(angle);
+    axis = normalize(axis);
+    float s, c;
+    s = sin(angle);
     c = cos(angle);
-	return float4(axis.x*s,axis.y*s,axis.z*s,c);
+    return float4(axis.x * s, axis.y * s, axis.z * s, c);
 }
 
 float4 qInverse(float4 q)
 {
     float4 x = q;
-    return float4(1.0/(dot(x, x)) * x * float4(-1.0, -1.0, -1.0, 1.0));
+    return float4(1.0 / (dot(x, x)) * x * float4(-1.0, -1.0, -1.0, 1.0));
 }
 
 
@@ -200,11 +202,11 @@ uint WangHash(uint n)
     // collide with each other, which is important for the purposes of
     // seeding a random number generator.  This was verified empirically
     // by checking all 2^32 uints.
-    n = (n ^ 61u) ^ (n >> 16);
+    n = (n ^ 61u) ^(n >> 16);
     n *= 9u;
-    n = n ^ (n >> 4);
+    n = n ^(n >> 4);
     n *= 0x27d4eb2du;
-    n = n ^ (n >> 15);
+    n = n ^(n >> 15);
 
     return n;
 }
@@ -239,14 +241,21 @@ float NextFloat(inout uint state)
 {
     state = NextState(state);
     int n = int(state % 1000u);
-    return float(n) / 1000.;   
+    return float(n) / 1000.;
+}
+
+float NextInt(int xmax, inout uint state)
+{
+    state = NextState(state);
+    int n = int(state % xmax);
+    return n;
 }
 
 float NextFloat(float xmin, float xmax, inout uint state)
 {
     state = NextState(state);
     int n = int(state % 1000u);
-    float t = float(n) / 1000.;   
+    float t = float(n) / 1000.;
     return lerp(xmin, xmax, t);
 }
 
@@ -265,36 +274,51 @@ float3 NextFloat3(float3 rmin, float3 rmax, inout uint state)
     return float3(x, y, z);
 }
 
-float3 NextRandomDirection(float3 direction, float spread, inout uint state) 
+float3 NextRandomDirection(float3 direction, float spread, inout uint state)
 {
-  // Make an orthogonal basis whose third vector is along `direction'
-  float3 b3 = normalize(direction);
-  float3 different = (abs(b3.x) < 0.5) ? float3(1.0, 0.0, 0.0) : float3(0.0, 1.0, 0.0);
-  float3 b1 = normalize(cross(b3, different));
-  float3 b2 = cross(b1, b3);
- 
-  // Pick (x,y,z) randomly around (0,0,1)
-  //float z = NextFloat((spread * PI), 1, state);
-  float z = NextFloat(0, (spread * PI), state);
-  //float r = sqrt(1.0f - z * z);
-  float r = sqrt(z);
+    // Make an orthogonal basis whose third vector is along `direction'
+    float3 b3 = normalize(direction);
+    float3 different = (abs(b3.x) < 0.5) ? float3(1.0, 0.0, 0.0) : float3(0.0, 1.0, 0.0);
+    float3 b1 = normalize(cross(b3, different));
+    float3 b2 = cross(b1, b3);
+    
+    // Pick (x,y,z) randomly around (0,0,1)
+    //float z = NextFloat((spread * PI), 1, state);
+    float z = NextFloat(0, (spread * PI), state);
+    //float r = sqrt(1.0f - z * z);
+    float r = sqrt(z);
 
-  float theta = NextFloat(-PI, +PI, state);
-  float x = r * cos(theta);
-  float y = r * sin(theta);
- 
-  // Construct the vector that has coordinates (x,y,z) in the basis formed by b1, b2, b3
-  return x * b1 + y * b2 + z * b3;
+    float theta = NextFloat(-PI, +PI, state);
+    float x = r * cos(theta);
+    float y = r * sin(theta);
+    
+    // Construct the vector that has coordinates (x,y,z) in the basis formed by b1, b2, b3
+    return x * b1 + y * b2 + z * b3;
 }
 
-float3 RandomInSphere(inout uint state) 
+float3 RandomOnCube(inout uint state)
+{
+    float result[3];
+
+    //5 faces
+    int s = NextInt(6, state);
+    int c = s % 3; // get the axis perpendicular to the side you just picked
+
+    result[c] = (s > 2) ? 1. : 0.;
+    result[(c + 1) % 3] = NextFloat(state);
+    result[(c + 2) % 3] = NextFloat(state);
+
+    return float3(result[0], result[1], result[2]);
+}
+
+float3 RandomInSphere(inout uint state)
 {
     float u = NextFloat(state);
     float v = NextFloat(state);
     float theta = u * 2.0 * PI;
     float phi = acos(2.0 * v - 1.0);
     //float r = cbrt(NextFloat(state)); //doesn't exist
-    float r = pow(NextFloat(state), 1./3.); //cube root
+    float r = pow(NextFloat(state), 1. / 3.); //cube root
     float sinTheta = sin(theta);
     float cosTheta = cos(theta);
     float sinPhi = sin(phi);
@@ -304,31 +328,31 @@ float3 RandomInSphere(inout uint state)
     float z = r * cosPhi;
     return float3(x, y, z);
 }
- 
+
 
 bool RaySphereIntersection(float3 ro, float3 rd, float3 spherePos, float sphereRadius, out float t1, out float t2)
 {
     t1 = 0;
     t2 = 0;
 
-	//solve for tc
-	float3 l = spherePos - ro;
-	float tc = dot(l, rd);
-	
-	if (tc < 0.0) return false;
-	float d2 = (tc * tc) - dot(l, l);
-	
-	float radius2 = sphereRadius * sphereRadius;
-	if (d2 > radius2) return false;
+    //solve for tc
+    float3 l = spherePos - ro;
+    float tc = dot(l, rd);
+    
+    if (tc < 0.0) return false;
+    float d2 = (tc * tc) - dot(l, l);
+    
+    float radius2 = sphereRadius * sphereRadius;
+    if (d2 > radius2) return false;
 
-	//solve for t1c
-	float t1c = sqrt(radius2 - d2);
+    //solve for t1c
+    float t1c = sqrt(radius2 - d2);
 
-	//solve for intersection points
-	t1 = tc - t1c;
-	t2 = tc + t1c;
-	
-	return true;
+    //solve for intersection points
+    t1 = tc - t1c;
+    t2 = tc + t1c;
+    
+    return true;
 }
 
 ///

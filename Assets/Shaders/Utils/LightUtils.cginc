@@ -326,4 +326,98 @@ float CalculateFogDensity(RayHit hit, float intensity, float densityFallOff)
     return (i / d) * exp(-ro.y * d) * (1.0 - exp(-dist * rd.y * d)) / rd.y;
 }
 
+float3 CalculateVoxelLight(in SceneData sceneData, in RayHit hit, float intensity, float maxRange, uint materialID, float3 lightColor)
+{
+    
+    int iRange = abs(floor(maxRange));
+
+    float3 lightSum = 0;
+
+    //Voxel is the light source already
+    if (sceneData.voxel[hit.cell] == materialID)
+    {
+        lightSum += intensity;
+    }
+
+    LightData lightData;
+    lightData.color = lightColor;
+    lightData.intensity = intensity;
+    lightData.radius = maxRange - 0.5;
+    lightData.penumbraRadius = 0.5;
+    lightData.type = LIGHT_TYPE_POINT;
+    lightData.volumetricIntensity = 0;
+
+    uint rngState = sceneData.seed;
+
+    for (int x = -iRange; x <= iRange; x++)
+    for (int y = -iRange; y <= iRange; y++)
+    for (int z = -iRange; z <= iRange; z++)
+    {
+        if(x == 0 && y == 0 && z == 0)
+            continue;
+
+        uint3 ncell = hit.cell + uint3(x, y, z);
+        if (sceneData.voxel[ncell] == materialID)
+        {
+            lightData.position = RandomOnCube(rngState) + ncell;
+            //lightSum += CalculateLight(lightData, hit, sceneData);
+            lightSum += DiffuseLight(lightData, hit) * FadeOffIntensity(lightData, hit);
+        }
+    }
+
+    return lightSum;
+}
+
+
+//https://iquilezles.org/articles/voxellines/
+float CalculateOcclusion(float2 uv, float4 va, float4 vb, float4 vc, float4 vd)
+{
+    //uv = 1 - uv;
+    float2 st = 1.0 - uv;
+
+    // edges
+    float4 wa = float4(0.0, 0.0, uv.y, st.y) * vc;
+
+    // corners
+    //float4 wb = float4(uv.x * uv.y, st.x * uv.y, st.x * st.y, uv.x * st.y) * vd * (1.0 - vc.xzyw) * (1.0 - vc.zywx);
+    float4 wb = 0;
+    
+    //return 1 - saturate(wa.x + wa.y + wa.z + wa.w + wb.x + wb.y + wb.z + wb.w);
+    return saturate(wa.x + wa.y + wa.z + wa.w + wb.x + wb.y + wb.z + wb.w);
+}
+
+float CalculateOcclusion(in SceneData sceneData, in RayHit hit)
+{
+    //not finished
+    int3 cell = hit.cell;
+    float2 uv = hit.uv;
+
+    //right left forward back
+    float r = sceneData.voxel[cell + float3(01, 0, 00)];
+    float l = sceneData.voxel[cell + float3(-1, 0, 00)];
+    float f = sceneData.voxel[cell + float3(00, 0, 01)];
+    float b = sceneData.voxel[cell + float3(00, 0, -1)];
+
+    float fr = sceneData.voxel[cell + float3(01, 0, 01)];
+    float fl = sceneData.voxel[cell + float3(-1, 0, 01)];
+    float br = sceneData.voxel[cell + float3(01, 0, -1)];
+    float bl = sceneData.voxel[cell + float3(-1, 0, -1)];
+
+    float ur = sceneData.voxel[cell + float3(01, 1, 00)];
+    float ul = sceneData.voxel[cell + float3(-1, 1, 00)];
+    float uf = sceneData.voxel[cell + float3(00, 1, 01)];
+    float ub = sceneData.voxel[cell + float3(00, 1, -1)];
+
+    float ufr = sceneData.voxel[cell + float3(01, 1, 01)];
+    float ufl = sceneData.voxel[cell + float3(-1, 1, 01)];
+    float ubr = sceneData.voxel[cell + float3(01, 1, -1)];
+    float ubl = sceneData.voxel[cell + float3(-1, 1, -1)];
+
+    float4 va = !float4(r, l, b, f);
+    float4 vb = !float4(br, bl, fr, fl);
+    float4 vc = !float4(ul, ur, uf, ub);
+    float4 vd = !float4(ubr, ubl, ufr, ufl);
+    return CalculateOcclusion(uv, va, vb, vc, vd);
+}
+
 #endif

@@ -8,62 +8,74 @@ RWTexture3D<uint> Result;
 
 float iTime;
 
-[numthreads(8,8,8)]
+[numthreads(8, 8, 8)]
 
-void CSMain (uint3 id : SV_DispatchThreadID)
+void CSMain(uint3 id : SV_DispatchThreadID)
 {
+    int waterID = 1;
+    int groundID = 2;
+    int blockID = 3;
+    int lightID = 4;
+
+
     float3 pos = id;
     //pos.xz += iTime * 15;
     //pos = pos % 128;
 
-    int3 center = 128/2;
+    int3 center = 128 / 2;
     uint waterLevel = 36;
 
-    if(id.y < waterLevel && (id.x == 0 || id.x == 127 || id.z == 0 || id.z == 127))
+    if (id.y < waterLevel && (id.x == 0 || id.x == 127 || id.z == 0 || id.z == 127))
     {
-        Result[id] = 3;
+        Result[id] = blockID;
         return;
     }
 
     //Lamp
+    float3 lampPos = pos;
+
+    lampPos.xz -= center.xz; //offset to center to rotate it
+    lampPos.xz = rotate2d(lampPos.xz, radians(iTime) * 55. + id.y * 0.2);
+    lampPos.xz += center.xz; //offset back to original po
+
     uint lampHeight = 52;
 
-    float lampPole = distance(pos.xz, center.xz);
-    if(lampPole < 5 && id.y < lampHeight)
-    {   
-        Result[id] = 3;
+    float lampPole = abs(lampPos.x - center.x) + abs(lampPos.z - center.z);
+    if (lampPole < 5 && (lampPos.y < lampHeight || lampPos.y > lampHeight + 7))
+    {
+        Result[id] = blockID;
         return;
     }
 
-    float lampHead = sdBoxFrame(pos - float3(center.x, 55, center.z), 5, 1);
-    if(lampHead < 0)
+    float lampHead = sdBoxFrame(lampPos - float3(center.x, 55, center.z), 5, 1);
+    if (lampHead < 0)
     {
-        Result[id] = 3;
+        Result[id] = blockID;
         return;
     }
 
-    float lampCap = sdCone(pos - float3(center.x, 65, center.z), 15, 7);
-    float lampCapInner = sdCone(pos - float3(center.x, 63, center.z), 15, 7);
-    if(opSubtraction(lampCapInner, lampCap) < 0)
-    {
-        Result[id] = 3;
-        return;
-    }
 
     float groundValue = waterLevel + 8 * fbm_4(4.6 + pos.xz * 0.03);
     groundValue = max(groundValue, waterLevel);
-    if(pos.y < groundValue)
+    if (pos.y < groundValue)
     {
-        if(groundValue <= waterLevel)
+        if (groundValue <= waterLevel)
         {
-            Result[id] = 1;
+            Result[id] = waterID;
         }
         else
         {
-            Result[id] = 2;
+            if (id.x % 15 == 0 && id.z % 15 == 0)
+            {
+                Result[id] = lightID;
+            }
+            else
+            {
+                Result[id] = groundID;
+            }
         }
         return;
     }
 
-     Result[id] = 0;
+    Result[id] = 0;
 }

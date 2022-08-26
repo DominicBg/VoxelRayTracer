@@ -39,6 +39,7 @@ public class VoxelRayTracerTester : MonoBehaviour
 
 
     public bool useProgressiveRenderer;
+    public int rayPerFrame;
 
     public VoxelRayTracerSettings settings;
 
@@ -100,7 +101,7 @@ public class VoxelRayTracerTester : MonoBehaviour
             api.SetCameraFOV(mainCamera.fieldOfView);
         }
 
-        if(depthOfFieldShouldFocusVoxel)
+        if (depthOfFieldShouldFocusVoxel)
         {
             api.SetCameraDepthOfFieldForVoxelPosition(depthOfFieldFocusVoxel, depthOfFieldBlurAmount);
         }
@@ -134,9 +135,13 @@ public class VoxelRayTracerTester : MonoBehaviour
         tempLightData.Clear();
         for (int i = 0; i < lightDataComponents.Length; i++)
         {
-            tempLightData.Add(lightDataComponents[i].GetLightData());
+            if (lightDataComponents[i].gameObject.activeSelf)
+                tempLightData.Add(lightDataComponents[i].GetLightData());
         }
         api.SetLights(tempLightData);
+
+        progressiveRayTracer.rayPerFrame = rayPerFrame;
+
 
         //Render image!
         return api.RenderToTexture(t);
@@ -154,6 +159,8 @@ public class VoxelRayTracerTester : MonoBehaviour
         {
             api.SetSettings(settings);
             api.OnParameterChanged();
+
+            progressiveRayTracer.rayPerFrame = rayPerFrame;
         }
     }
 

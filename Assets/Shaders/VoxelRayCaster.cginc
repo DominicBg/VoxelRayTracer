@@ -42,18 +42,21 @@ BoxIntersectionResult BoxIntersection(float3 bmin, float3 bmax, float3 ro, float
 float2 GetUV(RayHit hit)
 {
     float3 n = abs(hit.normal);
+    float3 s = sign(hit.normal);
+    float2 uv = 0;
     if (n.x > 0.5)
     {
-        return hit.pos.zy;
+        uv = frac(hit.pos.zy);
+        return s.x == 1 ? uv : float2(1 - uv.x, uv.y);
     }
     if (n.y > 0.5)
     {
-        return hit.pos.xz;
+        return frac(hit.pos.xz);
     }
     //if(n.z > 0.5)
-
     {
-        return hit.pos.xy;
+        uv = frac(hit.pos.xy);
+        return s.z == -1 ? uv : float2(1 - uv.x, uv.y);
     }
 }
 
