@@ -17,6 +17,7 @@ public class VoxelRayTracerTester : MonoBehaviour
     public ComputeShader progressiveCalculatePixelColor;
     public ComputeShader progressiveRayBounce;
     public ComputeShader progressiveRollingAverage;
+    public ComputeShader progressiveDenoiser;
 
     [Header("Voxel")]
     public VoxelGenerator voxelGenerator;
@@ -56,6 +57,7 @@ public class VoxelRayTracerTester : MonoBehaviour
     public float exporterStartTime = 0;
     public float exporterEndTime = 1;
     public int exporterFPS = 30;
+    public int exporterRayPerFrame = 250;
     public VoxelRayTracerSettings exporterSettings;
 
     private void Start()
@@ -66,13 +68,14 @@ public class VoxelRayTracerTester : MonoBehaviour
 
     public void Init()
     {
-        progressiveRayTracer = new ProgressiveVoxelRayTracerAPI(progressiveCameraRayCalculator, progressiveRayCaster, progressiveCalculatePixelColor, progressiveRayBounce, progressiveRollingAverage);
+        progressiveRayTracer = new ProgressiveVoxelRayTracerAPI(progressiveCameraRayCalculator, progressiveRayCaster, progressiveCalculatePixelColor, progressiveRayBounce, progressiveRollingAverage, progressiveDenoiser);
         fixedRayTracer = new FixedVoxelRayTracerAPI(fixedVoxellRayTracerShader);
 
         progressiveRayTracer.SetSettings(settings);
         fixedRayTracer.SetSettings(settings);
 
         lightDataComponents = FindObjectsOfType<LightDataComponent>();
+        progressiveRayTracer.rayPerFrame = rayPerFrame;
     }
 
     public RenderTexture RenderImage(float t)
@@ -140,8 +143,6 @@ public class VoxelRayTracerTester : MonoBehaviour
         }
         api.SetLights(tempLightData);
 
-        progressiveRayTracer.rayPerFrame = rayPerFrame;
-
 
         //Render image!
         return api.RenderToTexture(t);
@@ -193,6 +194,8 @@ public class VoxelRayTracerTester : MonoBehaviour
 
         api = useProgressiveRenderer ? progressiveRayTracer : fixedRayTracer;
         api.SetSettings(exporterSettings);
+
+        progressiveRayTracer.rayPerFrame = exporterRayPerFrame;
 
         GetExportData(out float frameDuration, out int frameCount, out int frameNameMaxDigit);
 

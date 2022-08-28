@@ -8,8 +8,8 @@
 #include "Materials/VoxelRayTracerMaterial2.cginc"
 #include "Materials/VoxelRayTracerMaterial_Blocks.cginc"
 
-#include "Skybox/SimpleSkybox.cginc"
-//#include "Skybox/FunkySkybox.cginc"
+//#include "Skybox/SimpleSkybox.cginc"
+#include "Skybox/FunkySkybox.cginc"
 
 
 float3 GetColor(in SceneData sceneData, inout RayHit hit)
@@ -20,9 +20,10 @@ float3 GetColor(in SceneData sceneData, inout RayHit hit)
         case 2: return GetColorMaterial_Grass(sceneData, hit);
         case 3: return GetColorMaterial_Blocks(sceneData, hit);
         case 4: return 1; //light test
+        case 5: return GetColor(154, 215, 227); //glass test
         default: break;
     }
-    return 0;
+    return 1;
 }
 
 Material GetMaterial(in SceneData sceneData, inout RayHit hit)
@@ -64,6 +65,8 @@ float GetDiffuseCoef(in RayHit hit)
         case 1: return 0.0;
         case 2: return 1.0;
         case 3: return 0.1;
+        case 4: return 0.0;
+        case 5: return 0.0;
         default: break;
     }
     return 1;
@@ -71,7 +74,7 @@ float GetDiffuseCoef(in RayHit hit)
 
 float3 SampleSkybox(in SceneData sceneData, in RayHit hit)
 {
-    return SampleSimpleSkybox(hit.ro, hit.rd, sceneData.time);
+    return SampleFunkySkybox(hit.ro, hit.rd, sceneData.time);
 }
 
 #endif

@@ -19,11 +19,6 @@ int reflectionCount;
 
 SceneData GetSceneData()
 {
-    // settings.blurIterations = iBlurIteration;
-    // settings.shadowIterations = iShadowIteration;
-    // settings.volumetricLightSteps = iVolumetricLightSteps;
-    // settings.maxSteps = iMaxSteps;
-
     Settings settings;
     settings.blurIterations = 0;
     settings.shadowIterations = 0;
@@ -37,8 +32,6 @@ SceneData GetSceneData()
     sceneData.voxelSizes = int3(iVoxelSizes.x, iVoxelSizes.y, iVoxelSizes.z);
 
     return sceneData;
-    //sceneData.lightDatas = lightDatas;
-    //sceneData.volumetricNoise = volumetricNoise;
 }
 
 
@@ -54,7 +47,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 ro = InRayOrigin[id.xy].xyz;
     float3 rd = InRayDirection[id.xy].xyz;
 
-    RayHit hit = RayCast(ro, rd, 1, GetSceneData());
+    RayHit hit = RayCast(ro, rd, GetSceneData());
 
     OutHitPositionDistance[id.xy] = float4(hit.pos, hit.dist);
     OutHitNormalHasHit[id.xy] = float4((hit.normal), hit.hasHit);

@@ -1,0 +1,59 @@
+#pragma kernel CSMain
+
+#include "Utils/MathUtils.cginc"
+
+Texture2D<float4> InColor;
+RWTexture2D<float4> OutColorDenoised;
+
+float threshold;
+int2 resolution;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    //this is shit
+//     threshold = 1.5;
+//     float3 col = InColor[id.xy].rgb;
+
+//     // uint2 u = clamp(id.xy + int2(0, 1), 0, resolution);
+//     // uint2 d = clamp(id.xy - int2(0, 1), 0, resolution);
+//     // uint2 r = clamp(id.xy + int2(1, 0), 0, resolution);
+//     // uint2 l = clamp(id.xy - int2(1, 0), 0, resolution);
+
+//     uint2 u = id.xy + uint2(0, 1);
+//     uint2 d = id.xy - uint2(0, 1);
+//     uint2 r = id.xy + uint2(1, 0);
+//     uint2 l = id.xy - uint2(1, 0);
+
+//     float3 colu = InColor[u].rgb;
+//     float3 cold = InColor[d].rgb;
+//     float3 colr = InColor[r].rgb;
+//     float3 coll = InColor[l].rgb;
+
+//     float threshsq = threshold * threshold;
+//     float uok = step(distancesq(col, colu), threshsq);
+//     float dok = step(distancesq(col, cold), threshsq);
+//     float rok = step(distancesq(col, colr), threshsq);
+//     float lok = step(distancesq(col, coll), threshsq);
+
+//    float sum = 1 + uok + dok + rok + lok;
+
+//    col += (colu) + (cold) + (colr) + (coll );
+//    //col += (colu * uok) + (cold * dok) + (colr * rok) + (coll * lok);
+//    //col /= sum;
+//    col /= 5;
+    int iRange = 2;
+    float3 colSum = 0;
+    int indexSum = 0;
+
+    for (int x = -iRange; x <= iRange; x++)
+    for (int y = -iRange; y <= iRange; y++)
+    {
+        int2 i = id.xy + int2(x, y);
+        colSum += InColor[i].rgb;    
+        indexSum++;
+    }
+    colSum /= indexSum;
+
+    OutColorDenoised[id.xy] = float4(colSum, 1);
+}

@@ -144,7 +144,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 72
+  controlID: 63
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -169,7 +169,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 73
+  controlID: 64
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -348,18 +348,18 @@ MonoBehaviour:
       y: 21
       width: 1472.4
       height: 605.2
-    m_Scale: {x: 1, y: 1}
-    m_Translation: {x: 736.2, y: 302.6}
+    m_Scale: {x: 1.1908311, y: 1.1908311}
+    m_Translation: {x: 736.19995, y: 302.6}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -736.2
-      y: -302.6
-      width: 1472.4
-      height: 605.2
+      x: -618.2237
+      y: -254.10826
+      width: 1236.4474
+      height: 508.21652
     m_MinimalGUI: 1
   m_defaultScale: 1
   m_LastWindowPixelSize: {x: 1840.5, y: 782.75}
@@ -445,10 +445,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 491.2
+    x: 478.4
     y: 73.6
-    width: 1498.8
-    height: 657.4
+    width: 1472.4
+    height: 626.2
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -771,22 +771,22 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Shaders
+    - Assets/Renders
     m_Globs: []
     m_OriginalText: 
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/Shaders
+  - Assets/Renders
   m_LastFoldersGridSize: -1
   m_LastProjectPath: C:\Users\Dom\Voxel Raytracer
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 825a0000
-    m_LastClickedID: 23170
-    m_ExpandedIDs: 000000006e5a0000705a0000725a000000ca9a3b
+    m_SelectedIDs: 665b0000
+    m_LastClickedID: 23398
+    m_ExpandedIDs: 000000006e5a0000705a0000725a0000665b00006a5b000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -839,8 +839,8 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: 8a200000
-    m_LastClickedInstanceID: 8330
+    m_SelectedInstanceIDs: 085a0000
+    m_LastClickedInstanceID: 23048
     m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs: c6230000
     m_RenameOverlay:

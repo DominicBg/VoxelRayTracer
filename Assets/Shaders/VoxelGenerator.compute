@@ -16,13 +16,30 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     int groundID = 2;
     int blockID = 3;
     int lightID = 4;
-
+    int glassID = 5;
 
     float3 pos = id;
+    int3 center = 128 / 2;
+
+    float glassCube = sdBox(pos - float3(center.x + 20, center.y, center.z), 5);
+    if (glassCube < 0)
+    {
+        Result[id] = glassID;
+        return;
+    }
+
+    
+    glassCube = sdBox(pos - float3(60, 50, 50), 1);
+    if (glassCube < 0)
+    {
+        Result[id] = glassID;
+        return;
+    }
+
+
     //pos.xz += iTime * 15;
     //pos = pos % 128;
 
-    int3 center = 128 / 2;
     uint waterLevel = 36;
 
     if (id.y < waterLevel && (id.x == 0 || id.x == 127 || id.z == 0 || id.z == 127))
@@ -34,20 +51,23 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     //Lamp
     float3 lampPos = pos;
 
+
     lampPos.xz -= center.xz; //offset to center to rotate it
     lampPos.xz = rotate2d(lampPos.xz, radians(iTime) * 55. + id.y * 0.2);
     lampPos.xz += center.xz; //offset back to original po
 
-    uint lampHeight = 52;
+    // uint lampHeight = 52;
 
-    float lampPole = abs(lampPos.x - center.x) + abs(lampPos.z - center.z);
-    if (lampPole < 5 && (lampPos.y < lampHeight || lampPos.y > lampHeight + 7))
-    {
-        Result[id] = blockID;
-        return;
-    }
+    // float lampPole = abs(lampPos.x - center.x) + abs(lampPos.z - center.z);
+    // if (lampPole < 5 && (lampPos.y < lampHeight || lampPos.y > lampHeight + 7))
+    // {
+    //     Result[id] = blockID;
+    //     return;
+    // }
+    int boxSize = 6;
 
-    float lampHead = sdBoxFrame(lampPos - float3(center.x, 55, center.z), 5, 1);
+    lampPos.y = (lampPos.y % (boxSize)) - boxSize / 2;
+    float lampHead = sdBoxFrame(lampPos - float3(center.x, 0, center.z), boxSize, 1);
     if (lampHead < 0)
     {
         Result[id] = blockID;
@@ -65,17 +85,28 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         }
         else
         {
-            if (id.x % 15 == 0 && id.z % 15 == 0)
-            {
-                Result[id] = lightID;
-            }
-            else
-            {
-                Result[id] = groundID;
-            }
+            // if (id.x % 15 == 0 && id.z % 15 == 0)
+            // {
+            //     Result[id] = lightID;
+            // }
+            // else
+            // {
+            //     Result[id] = groundID;
+            // }
+            Result[id] = groundID;
         }
         return;
     }
 
-    Result[id] = 0;
+
+    int shinyBoxDist = waterLevel + 3 + 2.55 * sin(iTime + id.x + id.z);
+    if (id.y == shinyBoxDist && fbm_4(id.xz * 0.1) > 0.85)
+    {
+
+        Result[id] = lightID;
+        return;
+    }
+
+    Result[id] = 0;//nothing
+
 }

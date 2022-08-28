@@ -74,7 +74,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
    // float3 col = float3(hit.uv.x, hit.uv.y, 0);
     //float3 col = float3(hit.cell / 128.);
     float3 lightCol;
-
     if(!hit.hasHit)
     {
         col = SampleSkybox(sceneData, hit);

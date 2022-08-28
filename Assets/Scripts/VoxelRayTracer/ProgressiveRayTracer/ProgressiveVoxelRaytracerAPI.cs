@@ -10,6 +10,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
     ComputeShader calculatePixelColor;
     ComputeShader bounceRay;
     ComputeShader rollingAverage;
+    ComputeShader denoiser;
 
     RenderTexture rayOrigin;
     RenderTexture rayDirection;
@@ -21,20 +22,24 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
     RenderTexture frameSurfaceColor;
     RenderTexture frameColor;
 
+    RenderTexture outputTextureDenoised;
+
     int frameCount;
     float previousT;
     Vector3 previousCamPos;
     Quaternion previousCamRot;
 
     public int rayPerFrame = 1;
+    bool denoised = false;
 
-    public ProgressiveVoxelRayTracerAPI(ComputeShader cameraRayCalculator, ComputeShader rayCaster, ComputeShader calculatePixelColor, ComputeShader bounceRay, ComputeShader rollingAverage) : base()
+    public ProgressiveVoxelRayTracerAPI(ComputeShader cameraRayCalculator, ComputeShader rayCaster, ComputeShader calculatePixelColor, ComputeShader bounceRay, ComputeShader rollingAverage, ComputeShader denoiser) : base()
     {
         this.cameraRayCalculator = cameraRayCalculator;
         this.rayCaster = rayCaster;
         this.calculatePixelColor = calculatePixelColor;
         this.bounceRay = bounceRay;
         this.rollingAverage = rollingAverage;
+        this.denoiser = denoiser;
     }
 
     public override void OnParameterChanged()
@@ -57,6 +62,7 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         EnsureTexture(ref frameColor, settings.resolution, RenderTextureFormat.ARGBFloat);
 
         EnsureTexture(ref outputTexture, settings.resolution, RenderTextureFormat.ARGBFloat);
+        EnsureTexture(ref outputTextureDenoised, settings.resolution, RenderTextureFormat.ARGBFloat);
     }
 
     void EnsureTexture(ref RenderTexture renderTexture, Vector2Int resolution, RenderTextureFormat textureFormat)
@@ -128,6 +134,8 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
 
     void CalculateRayBounces()
     {
+        SetOpaqueVoxelInShader(bounceRay);
+
         bounceRay.SetTexture(0, "InHitPositionDistance", hitPositionDistance);
         bounceRay.SetTexture(0, "InHitNormal", hitNormalHasHit);
         bounceRay.SetTexture(0, "InHitMaterialID", hitMaterialID);
@@ -148,6 +156,16 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
         Dispatch(rollingAverage);
     }
 
+    void Denoise()
+    {
+        SetResolutionParameterInShader(denoiser);
+        denoiser.SetFloat("threshold", 0.1f);
+
+        denoiser.SetTexture(0, "InColor", outputTexture);
+        denoiser.SetTexture(0, "OutColorDenoised", outputTextureDenoised);
+        Dispatch(denoiser);
+    }
+
     void Dispatch(ComputeShader computeShader)
     {
         int x = settings.resolution.x / 8;
@@ -164,9 +182,22 @@ public class ProgressiveVoxelRayTracerAPI : VoxelRayTracerAPI
             previousCamPos = cameraPos;
             previousCamRot = cameraRot;
             previousT = t;
+            denoised = false;
         }
 
         EnsureTextures();
+
+        if(!denoised && Input.GetKey(KeyCode.Z))
+        {
+            Debug.Log("Denoised");
+            Denoise();
+            denoised = true;
+        }
+
+        if(denoised)
+        {
+            return outputTextureDenoised;
+        }
 
         for (int i = 0; i < rayPerFrame; i++)
         {
