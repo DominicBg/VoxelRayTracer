@@ -78,6 +78,14 @@ public class VoxelRayTracerTester : MonoBehaviour
         progressiveRayTracer.rayPerFrame = rayPerFrame;
     }
 
+    private void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.Z))
+        {
+            progressiveRayTracer.denoise = !progressiveRayTracer.denoise;
+        }
+    }
+
     public RenderTexture RenderImage(float t)
     {
         api = useProgressiveRenderer ? progressiveRayTracer : fixedRayTracer;
@@ -144,6 +152,8 @@ public class VoxelRayTracerTester : MonoBehaviour
         api.SetLights(tempLightData);
 
 
+        //LightingSettings.DenoiserType.OpenImage
+        
         //Render image!
         return api.RenderToTexture(t);
     }

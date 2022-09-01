@@ -30,7 +30,7 @@ SceneData GetSceneData(uint2 id)
     sceneData.voxel = voxel;
     sceneData.time = 0.5;
     sceneData.voxelSizes = int3(iVoxelSizes.x, iVoxelSizes.y, iVoxelSizes.z);
-    sceneData.seed = WangHash(frameCount) + WangHash(id.x) +  WangHash(id.y);
+    sceneData.seed = (WangHash(frameCount * 25) + WangHash(id.x) +  WangHash(id.y)) / 3 ;
 
     return sceneData;
 }
@@ -73,19 +73,29 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float3 hitPos = hit.pos + hit.normal * 0.001;
     uint refractMat = 5;
     
-    if (hit.materialID == refractMat && NextFloat(0, 1,  sceneData.seed) < 0.9) //test refraction
+    if (hit.materialID == refractMat) //test refraction
     {
         float eta = 1.333;
-        float3 refractDir = refract(hit.rd, hit.normal, eta);
 
-        if (!all(refractDir == 0))
+        float chanceToRefract = NextFloat(0, 1,  sceneData.seed);
+
+        //https://en.wikipedia.org/wiki/Total_internal_reflection#Critical_angle
+        float criticalAngle = asin(1/eta);
+        float currentAngle = acos(abs(dot(hit.rd, hit.normal)));
+        float angleRatio = currentAngle / criticalAngle;
+
+        if(NextFloat(0, 1,  sceneData.seed) > angleRatio)
         {
-            //multi voxel traversal
-            RayHit refractHit = RayCast(hit.pos - hit.normal * 0.001, refractDir, refractMat, sceneData);
-            hitPos = refractHit.pos - refractHit.normal * 0.001;
-            reflDir = hit.rd;
+            float3 refractDir = refract(hit.rd, hit.normal, eta);
+            if (!all(refractDir == 0))
+            {
+                //multi voxel traversal
+                RayHit refractHit = RayCast(hit.pos - hit.normal * 0.001, refractDir, refractMat, sceneData);
+                hitPos = refractHit.pos - refractHit.normal * 0.001;
+                reflDir = hit.rd;
+            }
         }
-        //else use perfect reflection?
+        //else use perfect reflection
     }
     else if (diffuseCoef > 0)
     {

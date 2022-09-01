@@ -3,6 +3,11 @@
 #include "Utils/MathUtils.cginc"
 
 Texture2D<float4> InColor;
+//Texture2D<float4> InHitPositionDistance;
+Texture2D<float4> InHitNormal;
+Texture2D<uint> InHitMaterialID;
+
+//Texture2D<float2> InOutMoment;
 RWTexture2D<float4> OutColorDenoised;
 
 float threshold;
@@ -12,48 +17,144 @@ int2 resolution;
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
     //this is shit
-//     threshold = 1.5;
-//     float3 col = InColor[id.xy].rgb;
+    //     threshold = 1.5;
+    //     float3 col = InColor[id.xy].rgb;
 
-//     // uint2 u = clamp(id.xy + int2(0, 1), 0, resolution);
-//     // uint2 d = clamp(id.xy - int2(0, 1), 0, resolution);
-//     // uint2 r = clamp(id.xy + int2(1, 0), 0, resolution);
-//     // uint2 l = clamp(id.xy - int2(1, 0), 0, resolution);
+    //     // uint2 u = clamp(id.xy + int2(0, 1), 0, resolution);
+    //     // uint2 d = clamp(id.xy - int2(0, 1), 0, resolution);
+    //     // uint2 r = clamp(id.xy + int2(1, 0), 0, resolution);
+    //     // uint2 l = clamp(id.xy - int2(1, 0), 0, resolution);
 
-//     uint2 u = id.xy + uint2(0, 1);
-//     uint2 d = id.xy - uint2(0, 1);
-//     uint2 r = id.xy + uint2(1, 0);
-//     uint2 l = id.xy - uint2(1, 0);
+    //     uint2 u = id.xy + uint2(0, 1);
+    //     uint2 d = id.xy - uint2(0, 1);
+    //     uint2 r = id.xy + uint2(1, 0);
+    //     uint2 l = id.xy - uint2(1, 0);
 
-//     float3 colu = InColor[u].rgb;
-//     float3 cold = InColor[d].rgb;
-//     float3 colr = InColor[r].rgb;
-//     float3 coll = InColor[l].rgb;
+    //     float3 colu = InColor[u].rgb;
+    //     float3 cold = InColor[d].rgb;
+    //     float3 colr = InColor[r].rgb;
+    //     float3 coll = InColor[l].rgb;
 
-//     float threshsq = threshold * threshold;
-//     float uok = step(distancesq(col, colu), threshsq);
-//     float dok = step(distancesq(col, cold), threshsq);
-//     float rok = step(distancesq(col, colr), threshsq);
-//     float lok = step(distancesq(col, coll), threshsq);
+    //     float threshsq = threshold * threshold;
+    //     float uok = step(distancesq(col, colu), threshsq);
+    //     float dok = step(distancesq(col, cold), threshsq);
+    //     float rok = step(distancesq(col, colr), threshsq);
+    //     float lok = step(distancesq(col, coll), threshsq);
 
-//    float sum = 1 + uok + dok + rok + lok;
+    //    float sum = 1 + uok + dok + rok + lok;
 
-//    col += (colu) + (cold) + (colr) + (coll );
-//    //col += (colu * uok) + (cold * dok) + (colr * rok) + (coll * lok);
-//    //col /= sum;
-//    col /= 5;
-    int iRange = 2;
-    float3 colSum = 0;
-    int indexSum = 0;
+    //    col += (colu) + (cold) + (colr) + (coll );
+    //    //col += (colu * uok) + (cold * dok) + (colr * rok) + (coll * lok);
+    //    //col /= sum;
+    //    col /= 5;
+    // int iRange = 2;
+    // float3 colSum = 0;
+    // int indexSum = 0;
 
-    for (int x = -iRange; x <= iRange; x++)
-    for (int y = -iRange; y <= iRange; y++)
+    // for (int x = -iRange; x <= iRange; x++)
+    // for (int y = -iRange; y <= iRange; y++)
+    // {
+    //     int2 i = id.xy + int2(x, y);
+    //     colSum += InColor[i].rgb;
+    //     indexSum++;
+    // }
+    // colSum /= indexSum;
+
+
+    //https://alain.xyz/blog/ray-tracing-denoising#ref_baktash2018
+
+    /**
+    * Variance Estimation
+    * Copyright (c) 2018, Christoph Schied
+    * All rights reserved.
+    * 🎓 Slightly simplified for this example:
+    */
+
+    // ⛏️ Setup
+    // float weightSum = 1.0;
+    // int radius = 3; // ⚪ 7x7 Gaussian Kernel
+    // float2 moment = InOutMoment[id.xy].rg;
+    // float4 c = InColor[id.xy];
+    // float histlen = tHistoryLength, ipos, 0).r;
+    // float depth = InHitPositionDistance[id.xy].w;
+    // float3 normal = InHitNormal[id.xy].xyz;
+    // uint meshID = InHitMaterialID[id.xy];
+
+    // for (int yy = -radius; yy <= radius; ++yy)
+    // {
+    //     for (int xx = -radius; xx <= radius; ++xx)
+    //     {
+    //         // ☝️ We already have the center data
+    //         if (xx != 0 && yy != 0)
+    //         {
+    //             continue;
+    //         }
+
+    //         // ⬇️ Sample current point data with current uv
+    //         int2 p = id.xy + int2(xx, yy);
+    //         float4 curColor = InColor[p];
+    //         float curDepth = InHitPositionDistance[p].w;
+    //         float3 curNormal = InHitNormal[p].xyz;
+
+    //         // 💡 Determine the average brightness of this sample
+    //         // 🌎 Using International Telecommunications Union's ITU BT.601 encoding params
+    //         float l = Luminance(curColor.rgb);
+
+    //         float weightDepth = abs(curDepth - depth.x) / (depth.y * length(float2(xx, yy)) + 1.0e-2);
+    //         float weightNormal = pow(max(0, dot(curNormal, normal)), 128.0);
+
+    //         //uint curMeshID =  floatBitsToUint(tMeshID, p, 0).r);
+    //         uint curMeshID = InHitMaterialID[id.xy];
+
+    //         float w = exp(-weightDepth) * weightNormal * (meshID == curMeshID ? 1.0 : 0.0);
+
+    //         if (isnan(w))
+    //             w = 0.0;
+
+    //         weightSum += w;
+
+    //         moment += float2(l, l * l) * w;
+    //         c.rgb += curColor.rgb * w;
+    //     }
+    // }
+
+    // moment /= weightSum;
+    // c.rgb /= weightSum;
+
+    // varianceSpatial = (1.0 + 2.0 * (1.0 - histlen)) * max(0.0, moment.y - moment.x * moment.x);
+    // //outFragColor = float4(c.rgb, (1.0 + 3.0 * (1.0 - histlen)) * max(0.0, moment.y - moment.x * moment.x));
+
+
+    // OutColorDenoised[id.xy] = float4(c.rgb, (1.0 + 3.0 * (1.0 - histlen)) * max(0.0, moment.y - moment.x * moment.x));
+    //OutColorDenoised[id.xy] = float4(colSum, 1);
+
+
+    //blend kernel based on dot of normal + diffuse coef of materials + material id
+
+    uint materialID = InHitMaterialID[id.xy];
+    float3 normal = InHitNormal[id.xy];
+    int radius = 2;
+    
+    int sampleCount = 0;
+    float3 colorSum = 0;
+    for (int y = -radius; y <= radius; y++)
     {
-        int2 i = id.xy + int2(x, y);
-        colSum += InColor[i].rgb;    
-        indexSum++;
-    }
-    colSum /= indexSum;
+        for (int x = -radius; x <= radius; x++)
+        {
+            //if(x == 0 && y == 0) continue;
 
-    OutColorDenoised[id.xy] = float4(colSum, 1);
+            int id2 = id.xy + vec2(x, y);
+            uint materialID2 = InHitMaterialID[id2.xy];
+
+            if(materialID != materialID2) continue;
+
+            float3 col2 = InColor[id2].rgb;
+
+            colorSum += col2;
+            sampleCount++;
+        }   
+    }
+    
+    colorSum /= sampleCount;
+    OutColorDenoised[id.xy] = float4(colorSum, 1);
 }

@@ -459,7 +459,7 @@ MonoBehaviour:
   renderDebugMode: 0
   useFreeCamera: 1
   useOrthoCamera: 0
-  depthOfFieldBlurAmount: 1
+  depthOfFieldBlurAmount: 0
   depthOfFieldFocalLength: 0
   depthOfFieldShouldFocusVoxel: 1
   depthOfFieldFocusVoxel: {x: 64, y: 64, z: 64}

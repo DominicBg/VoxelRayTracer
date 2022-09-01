@@ -39,7 +39,7 @@ SceneData GetSceneData(uint2 id)
     sceneData.time = time;
     sceneData.voxelSizes = int3(iVoxelSizes.x, iVoxelSizes.y, iVoxelSizes.z); //test weird
     sceneData.lightDatas = lightDatas;
-    sceneData.seed = WangHash(frameCount) + WangHash(id.x) +  WangHash(id.y);
+    sceneData.seed = WangHash(frameCount * 25) + WangHash(id.x) + WangHash(id.y);
 
     return sceneData;
 }
@@ -95,6 +95,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         hit.dist = 999999;
     }
     col += CalculateMonteCarloVolumetricLight(hit.ro, hit.rd, hit.dist, sceneData);
+
+    col = saturate(col);
+    lightCol = saturate(lightCol);
 
     if(reflectionCount == 0)
     {
