@@ -28,8 +28,14 @@ float dofFocalLength;
 [numthreads(8, 8, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
+    float2 antiAliasing = 0;
     uint rngState = WangHash(frameCount) + WangHash(id.x) +  WangHash(id.y);
-    float2 antiAliasing = NextFloat2(0, 1, rngState);
+    
+    if(frameCount > 0)
+    {
+        antiAliasing = NextFloat2(0, 1, rngState);
+    }
+
     float2 uv = (float2(id.xy + antiAliasing) / iResolution.xy) * 2.0 - 1.0;
     float3 ro, rd;
 

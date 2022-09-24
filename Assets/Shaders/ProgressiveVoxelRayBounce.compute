@@ -75,7 +75,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     
     if (hit.materialID == refractMat) //test refraction
     {
-        float eta = 1.333;
+        float eta = 2.47;
 
         float chanceToRefract = NextFloat(0, 1,  sceneData.seed);
 

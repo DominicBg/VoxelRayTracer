@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using static VoxelRayTracerAPI;
 
+
 public class VoxelRayTracerTester : MonoBehaviour
 {
     public static VoxelRayTracerTester Instance { get; private set; }
@@ -84,6 +85,10 @@ public class VoxelRayTracerTester : MonoBehaviour
         {
             progressiveRayTracer.denoise = !progressiveRayTracer.denoise;
         }
+        if(Input.GetKeyDown(KeyCode.X))
+        {
+            useProgressiveRenderer = !useProgressiveRenderer;
+        }
     }
 
     public RenderTexture RenderImage(float t)
@@ -146,7 +151,9 @@ public class VoxelRayTracerTester : MonoBehaviour
         tempLightData.Clear();
         for (int i = 0; i < lightDataComponents.Length; i++)
         {
-            if (lightDataComponents[i].gameObject.activeSelf)
+            bool isFixedRender = !useProgressiveRenderer && (lightDataComponents[i].renderType & ERenderType.Fixed) != 0;
+            bool isProgressive = useProgressiveRenderer && (lightDataComponents[i].renderType & ERenderType.Progressive) != 0;
+            if (lightDataComponents[i].gameObject.activeSelf && (isFixedRender || isProgressive))
                 tempLightData.Add(lightDataComponents[i].GetLightData());
         }
         api.SetLights(tempLightData);

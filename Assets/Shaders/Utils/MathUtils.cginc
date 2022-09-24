@@ -355,5 +355,61 @@ bool RaySphereIntersection(float3 ro, float3 rd, float3 spherePos, float sphereR
     return true;
 }
 
+
+inline float3 projectOnNormalNormalized(float3 vec, float3 normal)
+{
+    return normal * dot(vec, normal);
+}
+
+inline float3 projectOnNormal(float3 vec, float3 normal)
+{
+    return normal * (dot(vec, normal) / dot(normal, normal));
+}
+
+inline float3 projectOnPlaneNormalized(float3 vec, float3 normal)
+{
+    return vec - normal * dot(vec, normal);
+}
+
+inline float3 projectOnPlane(float3 vec, float3 normal)
+{
+    return vec - normal * (dot(vec, normal) / dot(normal, normal));
+}
+
+void GetTangentBitangent(float3 normal, out float3 tangent, out float3 bitangent)
+{
+    float3 zAxis = float3(0, 0, 1);
+    float3 yAxis = float3(0, 1, 0);
+    //might be swapped
+    //tangent = (dot(normal, yAxis) > 0.9999) ? zAxis : yAxis;
+    //bitangent = cross(tangent, normal);
+   // bitangent = cross(normal, tangent);
+
+    bitangent = (dot(normal, yAxis) > 0.9999) ? zAxis : yAxis;
+    //tangent = cross(normal, bitangent);
+    tangent = cross(normal, bitangent);
+}
+
+float3x3 GetTBN(float3 normal)
+{
+    float3 tangent, bitangent;
+    GetTangentBitangent(normal, tangent, bitangent);
+    return float3x3(tangent, bitangent, normal);
+}
+
+float2 ProjectOnPlaneTo2D(float3 vec, float3 normal)
+{
+    float3 posProj = projectOnPlaneNormalized(vec, normal);
+
+    float3 tangent, bitangent;
+    GetTangentBitangent(normal, tangent, bitangent);
+    // float3 zAxis = float3(0, 0, 1);
+    // float3 yAxis = float3(0, 1, 0);
+    // float3 axis1 = (dot(normal, yAxis) > 0.9999) ? zAxis : yAxis;
+    // float3 axis2 = cross(axis1, normal);
+
+    return float2(dot(posProj, tangent), dot(posProj, bitangent));
+}
+
 ///
 #endif

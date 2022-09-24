@@ -158,8 +158,11 @@ void RenderRay(float3 ro, float3 rd, out Material material, out float3 color, ou
     //Skybox illuminations
     if (material.skyboxLight > 0)
     {
-        color = lerp(color, GetSkyboxColor(hit), material.skyboxLight);
+        //color = lerp(color, GetSkyboxColor(hit), material.skyboxLight);
     }
+
+    float occlusion = CalculateOcclusion(sceneData, hit, 0.5);
+    color *= occlusion;
 
     float maxDist = hit.hasHit ? hit.dist : 9999;
     obstruction = 0;

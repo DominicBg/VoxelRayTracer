@@ -7,7 +7,7 @@ public class CameraVoxelRayTracer : MonoBehaviour
 
     public void Update()
     {  
-        if(updateTime)
+        if(!VoxelRayTracerTester.Instance.useProgressiveRenderer)
             t += Time.deltaTime;
     }
 

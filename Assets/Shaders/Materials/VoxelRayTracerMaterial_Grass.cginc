@@ -4,7 +4,6 @@
 #include "Utils/LightUtils.cginc"
 #include "Utils/MaterialUtils.cginc"
 
-
 float3 GetColorMaterial_Grass(in SceneData sceneData, inout RayHit hit)
 {
     float3 subdivision = SubdivideVoxel(hit.pos, hit.normal, 4);
@@ -25,7 +24,6 @@ float3 GetColorMaterial_Grass(in SceneData sceneData, inout RayHit hit)
     {
         col = GetColor(50, 168, 82);
     }
-    
-    
+      
     return col;
 }

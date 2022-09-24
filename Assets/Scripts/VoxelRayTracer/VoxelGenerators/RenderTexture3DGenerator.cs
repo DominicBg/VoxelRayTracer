@@ -2,15 +2,15 @@ using UnityEngine;
 
 public abstract class RenderTexture3DGenerator : MonoBehaviour
 {
-    [SerializeField] ComputeShader computeShader;
-    [SerializeField] Vector3Int resolution = Vector3Int.one * 100;
+    [SerializeField] protected ComputeShader computeShader;
+    [SerializeField] protected Vector3Int resolution = Vector3Int.one * 100;
 
     [Header("Compute shader specific")]
-    [SerializeField] Vector3Int computeShaderThreadGroup = Vector3Int.one * 8;
-    [SerializeField] string kernelName = "CSMain";
+    [SerializeField] protected Vector3Int computeShaderThreadGroup = Vector3Int.one * 8;
+    [SerializeField] protected string kernelName = "CSMain";
 
     int kernelHandle;
-    RenderTexture renderTexture3D;
+    protected RenderTexture renderTexture3D;
     protected abstract RenderTextureFormat TextureType();
 
     private void Awake()
@@ -26,7 +26,7 @@ public abstract class RenderTexture3DGenerator : MonoBehaviour
         return renderTexture3D;
     }
 
-    void EnsureTexture()
+    protected void EnsureTexture()
     {
         if (renderTexture3D == null || renderTexture3D.width != resolution.x || renderTexture3D.height != resolution.y || renderTexture3D.volumeDepth != resolution.z)
         {
@@ -39,7 +39,7 @@ public abstract class RenderTexture3DGenerator : MonoBehaviour
         }
     }
 
-    void Dispatch()
+    protected void Dispatch()
     {
         computeShader.SetTexture(kernelHandle, "Result", renderTexture3D);
         int x = resolution.x / computeShaderThreadGroup.x;

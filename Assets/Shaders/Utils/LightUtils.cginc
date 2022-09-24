@@ -385,8 +385,31 @@ float CalculateOcclusion(float2 uv, float4 va, float4 vb, float4 vc, float4 vd)
     //return 1 - saturate(wa.x + wa.y + wa.z + wa.w + wb.x + wb.y + wb.z + wb.w);
     return saturate(wa.x + wa.y + wa.z + wa.w + wb.x + wb.y + wb.z + wb.w);
 }
+float CalculateOcclusion(in SceneData sceneData, in RayHit hit, float strength)
+{
+    float3x3 tbn = GetTBN(hit.normal);
+    float3 dir1 = tbn[0];
+    float3 dir2 = tbn[1]; 
 
-float CalculateOcclusion(in SceneData sceneData, in RayHit hit)
+    int3 cell = hit.cell + hit.normal;
+
+    float occlusion = 0;
+    for(int i = -1; i <= 1; i++)
+    {
+        for(int j = -1; j <= 1; j++)
+        {
+            int3 occlusionCell = cell + dir1 * i + dir2 * j;
+            bool hasVoxel = sceneData.voxel[occlusionCell];
+            float3 closestPos = clamp(hit.pos, occlusionCell, occlusionCell + 1);
+
+            float dist = 1.0 - saturate(distance(hit.pos, closestPos) / 0.5);
+            occlusion = max(occlusion, hasVoxel * dist * strength);
+        }
+    }
+    return 1. - saturate(occlusion);
+}
+
+float CalculateOcclusionAyudame(in SceneData sceneData, in RayHit hit)
 {
     //not finished
     int3 cell = hit.cell;

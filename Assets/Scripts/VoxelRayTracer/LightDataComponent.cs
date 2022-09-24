@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class LightDataComponent : MonoBehaviour
 {
     public VoxelLightType lightType;
@@ -10,6 +11,8 @@ public class LightDataComponent : MonoBehaviour
     public float radius = 1;
     public float penumbraRadius = 1;
     public float volumetricIntensity = 0.01f;
+
+    public ERenderType renderType;
 
     public LightData GetLightData()
     {

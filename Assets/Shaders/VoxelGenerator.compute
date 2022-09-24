@@ -27,7 +27,6 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         Result[id] = glassID;
         return;
     }
-
     
     glassCube = sdBox(pos - float3(60, 50, 50), 1);
     if (glassCube < 0)
@@ -36,12 +35,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         return;
     }
 
-
-    //pos.xz += iTime * 15;
-    //pos = pos % 128;
-
     uint waterLevel = 36;
-
     if (id.y < waterLevel && (id.x == 0 || id.x == 127 || id.z == 0 || id.z == 127))
     {
         Result[id] = blockID;
@@ -56,14 +50,6 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     lampPos.xz = rotate2d(lampPos.xz, radians(iTime) * 55. + id.y * 0.2);
     lampPos.xz += center.xz; //offset back to original po
 
-    // uint lampHeight = 52;
-
-    // float lampPole = abs(lampPos.x - center.x) + abs(lampPos.z - center.z);
-    // if (lampPole < 5 && (lampPos.y < lampHeight || lampPos.y > lampHeight + 7))
-    // {
-    //     Result[id] = blockID;
-    //     return;
-    // }
     int boxSize = 6;
 
     lampPos.y = (lampPos.y % (boxSize)) - boxSize / 2;
